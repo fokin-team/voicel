@@ -1,0 +1,6 @@
+System.config({
+    'paths': {
+        '@/*': './src/*',
+    },
+});
+
