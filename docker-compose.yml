@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     environment:
       NODE_ENV: production
-    container_name: vocel-backend-production
+    container_name: voicel-backend-production
+    restart: always
     volumes:
       # for development
       - ./packages/backend:/usr/src/app
-    restart: always
     ports:
       - "3000"
