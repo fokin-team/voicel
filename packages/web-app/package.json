@@ -12,7 +12,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build:prod": "vue-tsc --noEmit && vite build --emptyOutDir",
     "preview": "vite preview"
   },
   "dependencies": {

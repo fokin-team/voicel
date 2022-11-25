@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voicel-web-app-production
+    networks:
+      - default
+    ports:
+      - "80"
+    volumes:
+      - /data/nginx:/etc/nginx/sites-enabled
+    command: nginx -g "daemon off;"
