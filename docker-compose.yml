@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+    container_name: vocel-backend-production
+    volumes:
+      # for development
+      - ./packages/backend:/usr/src/app
+    restart: always
+    ports:
+      - "3000"
