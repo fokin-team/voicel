@@ -1,7 +1,13 @@
 import { WsService } from '@/ws/ws.service';
 import {
-  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WsResponse,
+  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway,
 } from '@nestjs/websockets';
+
+import { UseFilters } from '@nestjs/common';
+
+import { WsResponse } from '@/ws/interfaces/ws.response.interface';
+import { WsFormatException } from '@/ws/exceptions/ws.format.exception';
+import { WsFilterException } from '@/ws/exceptions/ws.filter.exception';
 
 import { createWorker } from 'mediasoup';
 
@@ -22,6 +28,7 @@ import { ConnectTransportDto } from './dto/connect-transport.dto';
 import { EnvironmentVariables } from '../configuration';
 import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
+@UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
   constructor(
@@ -77,7 +84,10 @@ export class ConnectionsGateway {
     const roomId = nanoid();
 
     if (this.roomList.has(roomId)) {
-      throw new Error('Room already exists');
+      throw new WsFormatException({
+        event: 'create-room',
+        message: 'Room already exists'
+      });
     } else {
       let worker = await this.getWorker();
       
@@ -95,7 +105,10 @@ export class ConnectionsGateway {
       return {
         event: 'create-room',
         data: {
-          roomId,
+          status: true,
+          data: {
+            roomId,
+          }
         },
       };
     }
@@ -125,14 +138,19 @@ export class ConnectionsGateway {
         peers: string;
       }>> {
     if (!this.roomList.has(body.roomId)) {
-      throw new Error('Room does not exist');
+      throw new WsFormatException('Room does not exist');
     }
+
+    client.roomId = body.roomId;
 
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name));
 
     return {
       event: 'join',
-      data: this.roomList.get(body.roomId).toJson(),
+      data: {
+        status: true,
+        data: this.roomList.get(body.roomId).toJson()
+      },
     };
   }
 
@@ -144,7 +162,10 @@ export class ConnectionsGateway {
   }>> {
     return {
       event: 'get-room',
-      data: this.roomList.get(body.roomId).toJson(),
+      data: {
+        status: true,
+        data: this.roomList.get(body.roomId).toJson(),
+      },
     };
   }
 
@@ -157,7 +178,10 @@ export class ConnectionsGateway {
         producerId: string;
       }>> {
     if (!this.roomList.has(client.roomId)) {
-      throw new Error('Room not found');
+      throw new WsFormatException({
+        event: 'produce',
+        message: 'Room not found'
+      });
     }
 
     const producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
@@ -165,7 +189,10 @@ export class ConnectionsGateway {
     return {
       event: 'produce',
       data: {
-        producerId: producerId as any,
+        status: true,
+        data: {
+          producerId: producerId as any,
+        }
       },
     };
   }
@@ -186,7 +213,10 @@ export class ConnectionsGateway {
     const result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
     return {
       event: 'consume',
-      data: result,
+      data: {
+        status: true,
+        data: result,
+      },
     };
   }
 
@@ -196,7 +226,7 @@ export class ConnectionsGateway {
     }
 
     if (!this.roomList.has(client.roomId)) {
-      throw new Error('Room not found');
+      return;
     }
 
     await this.roomList.get(client.roomId).removePeer(client.socketId);
@@ -205,8 +235,6 @@ export class ConnectionsGateway {
     }
 
     client.roomId = null;
-
-    return {};
   }
 
   @MessageMetaData('get-producers')
@@ -223,7 +251,10 @@ export class ConnectionsGateway {
     return {
       event: 'get-producers',
       data: {
-        items: producerList,
+        status: true,
+        data: {
+          items: producerList,
+        },
       },
     };
   }
@@ -234,10 +265,16 @@ export class ConnectionsGateway {
     try {
       return {
         event: 'get-rtp-capabilities',
-        data: this.roomList.get(client.roomId).getRtpCapabilities(),
+        data: {
+          status: true,
+          data: this.roomList.get(client.roomId).getRtpCapabilities(),
+        },
       };
     } catch (e) {
-      throw e;
+      throw new WsFormatException({
+        event: 'get-rtp-capabilities',
+        message: e.toString(),
+      });
     }
   }
 
@@ -248,10 +285,16 @@ export class ConnectionsGateway {
       const { params } = await this.roomList.get(client.roomId).createWebRtcTransport(client.socketId);
       return {
         event: 'create-rtc-transport',
-        data: params,
+        data: {
+          status: true,
+          data: params,
+        },
       };
     } catch (e) {
-      throw e;
+      throw new WsFormatException({
+        event: 'create-rtc-transport',
+        message: e.toString(),
+      });
     }
   }
 
@@ -260,7 +303,7 @@ export class ConnectionsGateway {
   async connectTransport(
   @MessageBody() body: ConnectTransportDto,
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
+  ): Promise<WsResponse<void>> {
     if (!this.roomList.has(client.roomId)) {
       return;
     }
@@ -269,7 +312,10 @@ export class ConnectionsGateway {
 
     return {
       event: 'connect-transport',
-      data: {},
+      data: {
+        status: true,
+        data: undefined,
+      },
     };
   }
 }
