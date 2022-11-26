@@ -32,10 +32,10 @@
     "msgpackr": "^1.8.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "ws": "^8.11.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.5.3",
     "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.0.0",
@@ -43,6 +43,7 @@
     "@types/jest": "28.1.8",
     "@types/node": "^16.0.0",
     "@types/supertest": "^2.0.11",
+    "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
