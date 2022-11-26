@@ -15,6 +15,8 @@ export class WsFilterException extends BaseWsExceptionFilter {
 
     this.logger.error(`Event: ${exception.error ? exception.error.event : 'unknown'}
     errors: ${exception.error ? JSON.stringify(exception.error.message) : exception.message}`);
+    this.logger.error('-----------------------------------------');
+    this.logger.error(JSON.stringify(exception));
 
     if (exception.error) {
       client.send(pack({
