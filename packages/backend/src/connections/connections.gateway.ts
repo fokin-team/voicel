@@ -28,14 +28,14 @@ export class ConnectionsGateway {
     private configService: ConfigService<EnvironmentVariables>
   ) {
     (async () => {
-      let numWorkers = configService.get('MEDIASOUP_WORKERS_NUM');
+      let numWorkers = configService.get('MEDIASOUP_WORKERS_NUM', { infer: true });
 
       for (let i = 0; i < numWorkers; i++) {
         const worker = await createWorker({
-          logLevel: configService.get('MEDIASOUP_WORKER_LOGLEVEL'),
-          logTags: configService.get('MEDIASOUP_WORKER_LOGTAGS'),
-          rtcMinPort: configService.get('MEDIASOUP_WORKER_RTC_MINPORT'),
-          rtcMaxPort: configService.get('MEDIASOUP_WORKER_RTC_MAXPORT'),
+          logLevel: configService.get('MEDIASOUP_WORKER_LOGLEVEL', { infer: true }),
+          logTags: configService.get('MEDIASOUP_WORKER_LOGTAGS', { infer: true }),
+          rtcMinPort: configService.get('MEDIASOUP_WORKER_RTC_MINPORT', { infer: true }),
+          rtcMaxPort: configService.get('MEDIASOUP_WORKER_RTC_MAXPORT', { infer: true }),
         })
 
         worker.on('died', () => {
