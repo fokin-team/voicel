@@ -35,7 +35,7 @@ class WebRtc {
 
   public producerTransport: MediasoupTypes.Transport | undefined = undefined;
 
-  public producerLabel = new Map();
+  public producerLabel = new Map<string, string>();
 
   public consumerTransport: MediasoupTypes.Transport | undefined = undefined;
 
@@ -323,7 +323,7 @@ class WebRtc {
       });
 
       producer.on('transportclose', () => {
-        console.log('Producer transport close');
+        console.log('[produce] Producer transport close');
         if (!audio) {
           // TODO: delete media element;
         }
@@ -331,7 +331,7 @@ class WebRtc {
       });
 
       producer.on('@close', () => {
-        console.log('Closing producer');
+        console.log('[produce] Closing producer');
         if (!audio) {
           // TODO: delete media element;
         }
@@ -367,7 +367,17 @@ class WebRtc {
   }
 
   closeProducer(mediaType: keyof typeof MediaType) {
+    if (!this.producerLabel.has(mediaType)) {
+      throw new Error(`[closeProducer] producer with type ${mediaType} not exists`);
+    }
 
+    const producerId = this.producerLabel.get(mediaType);
+
+    console.log('[closeProducer] Close producer', producerId);
+
+    this.ws.emit('producer-closed', {
+      producerId,
+    });
   }
 
   pauseProducer(mediaType: keyof typeof MediaType) {
