@@ -142,4 +142,30 @@ export class ConnectionsGateway {
 
     return {};
   }
+
+  @MessageMetaData('get-producers')
+  @SubscribeMessage('get-producers')
+  async getProducers(
+    @ConnectedSocket() client: WebSocketEntity,
+  ) {
+    if (!this.roomList.has(client.roomId)) return
+
+    let producerList = this.roomList.get(client.roomId).getProducerListForPeer();
+
+    return {
+      items: producerList,
+    };
+  }
+
+  @MessageMetaData('get-rtp-capabilities')
+  @SubscribeMessage('get-rtp-capabilities')
+  async getRtpCapabilities(@ConnectedSocket() client: WebSocketEntity) {
+    try {
+      return {
+        items: this.roomList.get(client.roomId).getRtpCapabilities(),
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
 }
