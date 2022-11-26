@@ -14,3 +14,14 @@ services:
       - ./packages/backend:/usr/src/app
     ports:
       - "3000"
+  web-app:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+    container_name: voicel-web-app-production
+    restart: always
+    ports:
+      - "80"
+    volumes:
+      - /data/nginx:/etc/nginx/sites-enabled
+    command: nginx -g "daemon off;"
