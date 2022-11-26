@@ -68,7 +68,7 @@ class WebRtc {
   async createRoom() {
     const createRoomResponse = await this.ws.emitPromised<{ roomId: string }>('create-room');
     if (!createRoomResponse.status) {
-      throw new Error(createRoomResponse.errors as string);
+      throw new Error(`[createRoom] create room failed ${createRoomResponse.errors.toString()}`);
     }
 
     this.roomId = createRoomResponse.data.roomId;
@@ -77,10 +77,15 @@ class WebRtc {
   }
 
   async join(roomId: string) {
-    const room = await this.ws.emitPromised('join', { roomId });
-    const responseRtpCapabilities = await this.ws.emitPromised<MediasoupTypes.RtpCapabilities>('get-rtp-capabilities');
+    const responseJoinToRoom = await this.ws.emitPromised<{ id: string, peers: string }>('join', { roomId });
+    if (!responseJoinToRoom.status) {
+      throw new Error(`[join] join to room failed ${responseJoinToRoom.errors.toString()}`);
+    }
+
+    const responseRtpCapabilities = await this.ws
+      .emitPromised<MediasoupTypes.RtpCapabilities>('get-rtp-capabilities');
     if (!responseRtpCapabilities.status) {
-      throw new Error(responseRtpCapabilities.errors as string);
+      throw new Error(`[join] get rtp capabilities failed ${responseRtpCapabilities.errors.toString()}`);
     }
 
     this.device = await this.loadDevice(responseRtpCapabilities.data);
@@ -94,7 +99,7 @@ class WebRtc {
       return device;
     } catch (e) {
       if ((e as MediasoupTypes.UnsupportedError)?.name === 'UnsupportedError') {
-        console.error('[loadDevice] Browser not supported');
+        throw new Error('[loadDevice] Browser not supported');
       }
 
       throw new Error((e as MediasoupTypes.UnsupportedError).message);
@@ -109,7 +114,8 @@ class WebRtc {
     });
 
     if (!responseCreateWebRtcProducerTransport.status) {
-      throw new Error(responseCreateWebRtcProducerTransport.errors as string);
+      throw new Error(`[initTransports]: create rtc transport ${responseCreateWebRtcProducerTransport
+        .errors.toString()}`);
     }
 
     this.producerTransport = this.device?.createSendTransport(responseCreateWebRtcProducerTransport.data);
@@ -122,7 +128,7 @@ class WebRtc {
 
       if (!response.status) {
         errorCallback(new Error(response.errors as string));
-        throw new Error(response.errors as string);
+        throw new Error(`[initTransports]: connect transport failed ${response.errors.toString()}`);
       }
 
       callback();
@@ -137,7 +143,7 @@ class WebRtc {
 
       if (!response.status) {
         errorCallback(new Error(response.errors as string));
-        throw new Error(response.errors as string);
+        throw new Error(`[initTransports]: produce failed ${response.errors.toString()}`);
       }
 
       callback({ id: response.data.producerId });
@@ -166,7 +172,8 @@ class WebRtc {
     });
 
     if (!responseCreateWebRtcConsumerTransport.status) {
-      throw new Error(responseCreateWebRtcConsumerTransport.errors as string);
+      throw new Error(`[initTransports]: create rtc transport ${responseCreateWebRtcConsumerTransport
+        .errors.toString()}`);
     }
 
     this.consumerTransport = this.device?.createRecvTransport(responseCreateWebRtcConsumerTransport.data);
@@ -179,7 +186,7 @@ class WebRtc {
 
       if (!response.status) {
         errorCallback(new Error(response.errors as string));
-        throw new Error(response.errors as string);
+        throw new Error(`[initTransports]: connect transport failed ${response.errors?.toString()}`);
       }
 
       callback();
@@ -223,6 +230,7 @@ class WebRtc {
     this.wsListeners.set('disconnect', disconnectListenerId);
 
     this.isOpen = true;
+    this.ws.emit('get-producers');
   }
 
   async produce(mediaType: keyof typeof MediaType, deviceId = null) {

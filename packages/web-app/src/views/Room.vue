@@ -23,7 +23,10 @@ onMounted(async () => {
       '',
     );
 
-    await webRtc.createRoom();
+    const roomId = await webRtc.createRoom();
+    await webRtc.join(roomId);
+    await webRtc.initTransports();
+    webRtc.initSockets();
   }
 });
 </script>
