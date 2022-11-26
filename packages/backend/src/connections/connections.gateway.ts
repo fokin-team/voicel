@@ -168,4 +168,15 @@ export class ConnectionsGateway {
       throw e;
     }
   }
+
+  @MessageMetaData('create-rtc-transport')
+  @SubscribeMessage('create-rtc-transport')
+  async createRtcTransport(@ConnectedSocket() client: WebSocketEntity) {
+    try {
+      const { params } = await this.roomList.get(client.roomId).createWebRtcTransport(client.socketId);
+      return params;
+    } catch (e) {
+      throw e;
+    }
+  }
 }
