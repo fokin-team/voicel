@@ -10,4 +10,4 @@ RUN npm i -g @nestjs/cli
 
 COPY . .
 
-EXPOSE 3000 8080
+EXPOSE 3000 3030 8080

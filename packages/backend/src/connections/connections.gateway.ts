@@ -19,7 +19,8 @@ import { ConnectTransportDto } from "./dto/connect-transport.dto";
 
 import {EnvironmentVariables} from '../configuration';
 
-import {nanoid} from 'nanoid';
+import { cpus } from "os";
+import { nanoid } from 'nanoid';
 
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
@@ -28,14 +29,21 @@ export class ConnectionsGateway {
     private configService: ConfigService<EnvironmentVariables>
   ) {
     (async () => {
-      let numWorkers = configService.get('MEDIASOUP_WORKERS_NUM');
+      let numWorkers = configService.get('MEDIASOUP_WORKERS_NUM', { infer: true }) || Object.keys(cpus()).length;
 
       for (let i = 0; i < numWorkers; i++) {
         const worker = await createWorker({
-          logLevel: configService.get('MEDIASOUP_WORKER_LOGLEVEL'),
-          logTags: configService.get('MEDIASOUP_WORKER_LOGTAGS'),
-          rtcMinPort: configService.get('MEDIASOUP_WORKER_RTC_MINPORT'),
-          rtcMaxPort: configService.get('MEDIASOUP_WORKER_RTC_MAXPORT'),
+          logLevel: configService.get('MEDIASOUP_WORKER_LOGLEVEL', { infer: true }) || 'warn',
+          logTags: [
+            'info',
+            'ice',
+            'dtls',
+            'rtp',
+            'srtp',
+            'rtcp'
+          ],
+          rtcMinPort: configService.get('MEDIASOUP_WORKER_RTC_MINPORT', { infer: true }) || 10000,
+          rtcMaxPort: configService.get('MEDIASOUP_WORKER_RTC_MAXPORT', { infer: true }) || 10100,
         })
 
         worker.on('died', () => {
