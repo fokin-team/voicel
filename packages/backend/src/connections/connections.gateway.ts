@@ -17,6 +17,8 @@ import {CreateRoomDto} from './dto/create-room.dto';
 import { JoinDto } from "./dto/join.dto";
 
 import {EnvironmentVariables} from '../configuration';
+import { ProduceDto } from "./dto/produce-dto";
+import { ConsumeDto } from "./dto/consume.dto";
 
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
@@ -93,6 +95,33 @@ export class ConnectionsGateway {
   @SubscribeMessage('get-room')
   async getRoomById(@MessageBody() body: JoinDto) {
     return this.roomList.get(body.roomId);
+  }
+
+  @MessageMetaData('produce')
+  @SubscribeMessage('produce')
+  async produce(
+    @MessageBody() body: ProduceDto,
+    @ConnectedSocket() client: WebSocketEntity,
+  ) {
+    if (!this.roomList.has(client.roomId)) {
+      throw new Error('Room not found');
+    }
+
+    let producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
+
+    return {
+      producerId
+    };
+  }
+
+  @MessageMetaData('consume')
+  @SubscribeMessage('consume')
+  async consume(
+    @MessageBody() body: ConsumeDto,
+    @ConnectedSocket() client: WebSocketEntity,
+  ) {
+    let result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities)
+    return result;
   }
 
   async handleDisconnect(client: WebSocketEntity){
