@@ -1,35 +1,34 @@
-import {WsService} from "@/ws/ws.service";
+import { WsService } from '@/ws/ws.service';
 import {
   ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WsResponse,
 } from '@nestjs/websockets';
 
-import {createWorker} from 'mediasoup';
+import { createWorker } from 'mediasoup';
 
-import { Peer } from "@/mediasoup/mediasoup.peer";
-import { Room } from "@/mediasoup/mediasoup.room";
+import { Peer } from '@/mediasoup/mediasoup.peer';
+import { Room } from '@/mediasoup/mediasoup.room';
 
-import { MessageMetaData } from "@/ws/ws.message-meta-data.decorator";
+import { MessageMetaData } from '@/ws/ws.message-meta-data.decorator';
 import { WebSocketEntity } from '@/ws/entities/ws.web-socket.entity';
 import { ConfigService } from '@nestjs/config';
 
-import { JoinDto } from "./dto/join.dto";
-import { ProduceDto } from "./dto/produce-dto";
-import { ConsumeDto } from "./dto/consume.dto";
-import { ConnectTransportDto } from "./dto/connect-transport.dto";
-
-import {EnvironmentVariables} from '../configuration';
-
-import { cpus } from "os";
+import { cpus } from 'os';
 import { nanoid } from 'nanoid';
+import { JoinDto } from './dto/join.dto';
+import { ProduceDto } from './dto/produce-dto';
+import { ConsumeDto } from './dto/consume.dto';
+import { ConnectTransportDto } from './dto/connect-transport.dto';
+
+import { EnvironmentVariables } from '../configuration';
 
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
   constructor(
     private readonly wsService: WsService,
-    private configService: ConfigService<EnvironmentVariables>
+    private configService: ConfigService<EnvironmentVariables>,
   ) {
     (async () => {
-      let numWorkers = configService.get('MEDIASOUP_WORKERS_NUM', { infer: true }) || Object.keys(cpus()).length;
+      const numWorkers = configService.get('MEDIASOUP_WORKERS_NUM', { infer: true }) || Object.keys(cpus()).length;
 
       for (let i = 0; i < numWorkers; i++) {
         const worker = await createWorker({
@@ -40,22 +39,23 @@ export class ConnectionsGateway {
             'dtls',
             'rtp',
             'srtp',
-            'rtcp'
+            'rtcp',
           ],
           rtcMinPort: configService.get('MEDIASOUP_WORKER_RTC_MINPORT', { infer: true }) || 10000,
           rtcMaxPort: configService.get('MEDIASOUP_WORKER_RTC_MAXPORT', { infer: true }) || 10100,
-        })
+        });
 
         worker.on('died', () => {
-          console.error('mediasoup worker died, exiting in 2 seconds... [pid:%d]', worker.pid)
-          setTimeout(() => process.exit(1), 2000)
-        })
-        this.workers.push(worker)
+          console.error('mediasoup worker died, exiting in 2 seconds... [pid:%d]', worker.pid);
+          setTimeout(() => process.exit(1), 2000);
+        });
+        this.workers.push(worker);
       }
     })();
   }
 
   private workers = [];
+
   private nextWorkerId = 0;
 
   private roomList = new Map<string, Room>();
@@ -67,7 +67,7 @@ export class ConnectionsGateway {
       this.nextWorkerId = 0;
     }
 
-    return worker
+    return worker;
   }
 
   @MessageMetaData('create-room')
@@ -78,13 +78,13 @@ export class ConnectionsGateway {
     if (this.roomList.has(roomId)) {
       throw new Error('Room already exists');
     } else {
-      let worker = await this.getWorker();
+      const worker = await this.getWorker();
       this.roomList.set(roomId, new Room(roomId, worker));
 
       return {
         event: 'create-room',
         data: {
-          roomId: roomId,
+          roomId,
         },
       };
     }
@@ -94,20 +94,20 @@ export class ConnectionsGateway {
   @SubscribeMessage('join')
   async join(
     @MessageBody() body: JoinDto,
-    @ConnectedSocket() client: WebSocketEntity,
+      @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-    id: string;
-    peers: string;
-  }>> {
+        id: string;
+        peers: string;
+      }>> {
     if (!this.roomList.has(body.roomId)) {
       throw new Error('Room does not exist');
     }
 
-    this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name))
+    this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name));
 
     return {
       event: 'join',
-      data: this.roomList.get(body.roomId).toJson()
+      data: this.roomList.get(body.roomId).toJson(),
     };
   }
 
@@ -127,20 +127,20 @@ export class ConnectionsGateway {
   @SubscribeMessage('produce')
   async produce(
     @MessageBody() body: ProduceDto,
-    @ConnectedSocket() client: WebSocketEntity,
+      @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-    producerId: string;
-  }>> {
+        producerId: string;
+      }>> {
     if (!this.roomList.has(client.roomId)) {
       throw new Error('Room not found');
     }
 
-    let producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
+    const producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
 
     return {
       event: 'produce',
       data: {
-        producerId: producerId as any
+        producerId: producerId as any,
       },
     };
   }
@@ -149,23 +149,23 @@ export class ConnectionsGateway {
   @SubscribeMessage('consume')
   async consume(
     @MessageBody() body: ConsumeDto,
-    @ConnectedSocket() client: WebSocketEntity,
+      @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-    producerId: string;
-    id: any;
-    kind: any;
-    rtpParameters: any;
-    type: any;
-    producerPaused: any;
-}>> {
-    let result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
+        producerId: string;
+        id: any;
+        kind: any;
+        rtpParameters: any;
+        type: any;
+        producerPaused: any;
+      }>> {
+    const result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
     return {
       event: 'consume',
       data: result,
     };
   }
 
-  async handleDisconnect(client: WebSocketEntity){
+  async handleDisconnect(client: WebSocketEntity) {
     if (!client.roomId) {
       return;
     }
@@ -189,11 +189,11 @@ export class ConnectionsGateway {
   async getProducers(
     @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-    items: any[];
-  }>>{
-    if (!this.roomList.has(client.roomId)) return
+        items: any[];
+      }>> {
+    if (!this.roomList.has(client.roomId)) return;
 
-    let producerList = this.roomList.get(client.roomId).getProducerListForPeer();
+    const producerList = this.roomList.get(client.roomId).getProducerListForPeer();
 
     return {
       event: 'get-producers',
@@ -233,8 +233,8 @@ export class ConnectionsGateway {
   @MessageMetaData('connect-transport')
   @SubscribeMessage('connect-transport')
   async connectTransport(
-    @MessageBody() body: ConnectTransportDto,
-    @ConnectedSocket() client: WebSocketEntity
+  @MessageBody() body: ConnectTransportDto,
+    @ConnectedSocket() client: WebSocketEntity,
   ) {
     if (!this.roomList.has(client.roomId)) {
       return;

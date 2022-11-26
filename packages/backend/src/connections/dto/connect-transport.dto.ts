@@ -1,4 +1,5 @@
 export class ConnectTransportDto {
-    transportId: string;
-    dtlsParameters: any;
+  transportId: string;
+
+  dtlsParameters: any;
 }
