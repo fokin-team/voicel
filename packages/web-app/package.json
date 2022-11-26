@@ -16,6 +16,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "mediasoup-client": "^3.6.62",
     "msgpackr": "^1.8.0",
     "naive-ui": "^2.34.2",
     "pinia": "^2.0.26",
