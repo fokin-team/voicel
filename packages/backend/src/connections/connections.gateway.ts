@@ -5,11 +5,15 @@ import {
 
 import {createWorker} from 'mediasoup';
 
+import { Peer } from "@/mediasoup/mediasoup.peer";
+
 import {MessageMetaData} from "@/ws/ws.message-meta-data.decorator";
 import { WsFilterException } from "@/ws/exceptions/ws.filter.exception";
+import { WebSocketEntity } from '@/ws/entities/ws.web-socket.entity';
 import {ConfigService} from '@nestjs/config';
 
 import {CreateRoomDto} from './dto/create-room.dto';
+import { JoinDto } from "./dto/join.dto";
 
 import {EnvironmentVariables} from '../configuration';
 
@@ -58,14 +62,29 @@ export class ConnectionsGateway {
   @SubscribeMessage('create-room')
   async createRoom(@MessageBody() body: CreateRoomDto) {
     if (this.roomList.has(body.roomId)) {
-      throw new WsFormatException();
+      throw new Error('Room already exists');
     } else {
       let worker = await this.getWorker();
-      this.roomList.set(body.roomId, new Room(body.roomId, worker))
-      
+      this.roomList.set(body.roomId, new Room(body.roomId, worker));
+
       return {
         roomId: body.roomId,
       };
     }
+  }
+
+  @MessageMetaData('join')
+  @SubscribeMessage('join')
+  async join(
+    @MessageBody() body: JoinDto,
+    @ConnectedSocket() client: WebSocketEntity,
+  ) {
+    if (!this.roomList.has(body.roomId)) {
+      throw new Error('Room does not exist');
+    }
+
+    this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name))
+
+    return this.roomList.get(body.roomId);
   }
 }
