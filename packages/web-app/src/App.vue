@@ -9,6 +9,8 @@
 </template>
 
 <style lang="scss">
+@import 'styles/index';
+
 #app {
   height: 100%;
 
