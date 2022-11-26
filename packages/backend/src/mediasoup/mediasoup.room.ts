@@ -15,8 +15,11 @@ export class Room {
      * @param id уникальный идентификатор комнаты
      * @param worker воркер
      */
-  constructor(id: string, worker: Worker) {
-    this.id = id;
+    constructor(id: string, worker: Worker, private broadcast: {
+        single: (id: string, data: any) => void;
+        all: (data: any) => void;
+    }) {
+        this.id = id;
 
     // Получаем настройки для меиа потоков
     const { mediaCodecs } = config.mediasoup.router;
@@ -138,15 +141,12 @@ export class Room {
       async (resolve, reject) => {
         const producer = await main.peers.get(peerId).createProducer(producerTransportId, rtpParameters, kind);
 
-        resolve(producer.id);
-
-        main.broadCast(peerId, 'newProducers', [{
-          producerId: producer.id,
-          producerPeerId: peerId,
-        }]);
-      },
-    );
-  }
+                resolve(producer.id)
+        
+                main.broadcast.single(peerId, 'newProducers', )
+            }
+        )
+    }
 
   /**
      * Потребление
@@ -207,20 +207,7 @@ export class Room {
     this.peers.get(peerId).closeProducer(producerId);
   }
 
-  /**
-     * Отправить сообщения все пирам комнаты
-     * @param peerId уникальный идентификатор пира
-     * @param name название сообщения
-     * @param data данные сообещния
-     */
-  public broadCast(peerId: string, name: string, data: any) {
-    // TODO: Реализовать отправку сообщений каждому из пиров комнаты по сокетам
-    // for (let otherID of Array.from(this.peers.keys()).filter((id) => id !== peerId)) {
-    //     this.send(otherID, name, data)
-    // }
-  }
-
-  /**
+    /**
      * Отправить сообщение пиру
      * @param peerId уникальный идентификатор пира
      * @param name название сообщение
