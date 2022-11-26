@@ -5,14 +5,14 @@ services:
     build:
       context: ./packages/backend
       dockerfile: Dockerfile
-    command: ./init.sh
+    # command: ./init.sh
     environment:
       NODE_ENV: production
     container_name: voicel-backend-production
     restart: always
     volumes:
       # for development
-      - ./packages/backend:/usr/src/app
+      # - ./packages/backend:/usr/src/app
     ports:
       - 3000
       - 8080
