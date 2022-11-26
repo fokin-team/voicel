@@ -30,7 +30,7 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new WsAdapter(app));
 
-  await app.listen(3000, '0.0.0.0');
+  await app.listen(3030, '0.0.0.0');
 }
 
 // eslint-disable-next-line no-void
