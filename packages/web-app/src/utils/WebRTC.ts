@@ -4,7 +4,7 @@ import { WebSocketProvider } from '@/utils/WebSocket';
 import { Emitter } from '@/utils/shared/Emitter';
 import { RtpCapabilities } from 'mediasoup-client/lib/RtpParameters';
 
-class WebRTC {
+class WebRtc {
   public name: string;
 
   public localMediaNode: HTMLElement;
@@ -41,12 +41,10 @@ class WebRTC {
     this.ws = ws;
   }
 
-  async bootstrap() {
-
-  }
-
   async createRoom() {
-
+    console.log('create-room');
+    const room = await this.ws.emitPromised('create-room');
+    console.log(room);
   }
 
   async join() {
@@ -121,4 +119,8 @@ class WebRTC {
   }
 
 
+}
+
+export {
+  WebRtc,
 }
