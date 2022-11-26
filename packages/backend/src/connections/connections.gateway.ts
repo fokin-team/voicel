@@ -79,7 +79,21 @@ export class ConnectionsGateway {
       throw new Error('Room already exists');
     } else {
       let worker = await this.getWorker();
-      this.roomList.set(roomId, new Room(roomId, worker));
+
+      const all = (data) => {
+        for (const [socketId, v] of this.roomList.get(roomId).getPeers()) {
+          this.wsService.sendEventBySocketId(roomId, socketId, data);
+        }
+      };
+
+      const result = {
+        single: (socketId, data) => {
+          this.wsService.sendEventBySocketId(roomId, socketId, data);
+        },
+        all,
+      };
+
+      this.roomList.set(roomId, new Room(roomId, worker, result));
 
       return {
         event: 'create-room',

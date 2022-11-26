@@ -13,7 +13,10 @@ export class Room {
      * @param id уникальный идентификатор комнаты
      * @param worker воркер
      */
-    constructor(id: string, worker: Worker) {
+    constructor(id: string, worker: Worker, private broadcast: {
+        single: (id: string, data: any) => void;
+        all: (data: any) => void;
+    }) {
         this.id = id;
 
         // Получаем настройки для меиа потоков
@@ -139,10 +142,7 @@ export class Room {
 
                 resolve(producer.id)
         
-                main.broadCast(peerId, 'newProducers', [{
-                    producerId: producer.id,
-                    producerPeerId: peerId
-                }])
+                main.broadcast.single(peerId, 'newProducers', )
             }
         )
     }
@@ -205,19 +205,6 @@ export class Room {
      */
     closeProducer(peerId: string, producerId: string) {
         this.peers.get(peerId).closeProducer(producerId);
-    }
-
-    /**
-     * Отправить сообщения все пирам комнаты
-     * @param peerId уникальный идентификатор пира
-     * @param name название сообщения
-     * @param data данные сообещния
-     */
-    public broadCast(peerId: string, name: string, data: any) {
-        // TODO: Реализовать отправку сообщений каждому из пиров комнаты по сокетам
-        // for (let otherID of Array.from(this.peers.keys()).filter((id) => id !== peerId)) {
-        //     this.send(otherID, name, data)
-        // }
     }
 
     /**
