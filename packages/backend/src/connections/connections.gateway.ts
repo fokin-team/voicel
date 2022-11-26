@@ -50,7 +50,7 @@ export class ConnectionsGateway {
   private workers = [];
   private nextWorkerId = 0;
 
-  private roomList = new Map();
+  private roomList = new Map<string, Room>();
 
   private getWorker() {
     const worker = this.workers[this.nextWorkerId];
@@ -91,13 +91,13 @@ export class ConnectionsGateway {
 
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name))
 
-    return this.roomList.get(body.roomId);
+    return this.roomList.get(body.roomId).toJson();
   }
 
   @MessageMetaData('get-room')
   @SubscribeMessage('get-room')
   async getRoomById(@MessageBody() body: JoinDto) {
-    return this.roomList.get(body.roomId);
+    return this.roomList.get(body.roomId).toJson();
   }
 
   @MessageMetaData('produce')
