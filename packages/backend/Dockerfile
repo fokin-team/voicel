@@ -10,7 +10,7 @@ RUN npm i -g @nestjs/cli
 
 COPY . .
 
-RUN npm ci  
+RUN npm ci --cache .npm --prefer-offline 
 RUN npm run build
 
 EXPOSE 3000 3030 8080
