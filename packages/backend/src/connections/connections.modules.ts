@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 
 import { WsModule } from '@/ws/ws.module';
 import { ConnectionsGateway } from "./connections.gateway";
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-    imports: [WsModule, ConfigService],
+    imports: [WsModule, ConfigModule],
     providers: [ConnectionsGateway],
 })
 export class ConnectionsModule {}
