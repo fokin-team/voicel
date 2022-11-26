@@ -8,7 +8,12 @@ import {
   GlobalThemeOverrides,
 } from 'naive-ui';
 
+import { useWebSocketStore } from '@/stores/webSocketStore';
 import { useGetCSSVariable } from '@/hooks/useCssVariables';
+
+// WebSocket
+const { ws } = useWebSocketStore();
+ws.connect();
 
 // Color
 const colorText = useGetCSSVariable('--color-text');
