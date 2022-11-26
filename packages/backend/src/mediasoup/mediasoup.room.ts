@@ -89,7 +89,10 @@ export class Room {
     }
 
     transport.on('dtlsstatechange', (dtlsState) => {
-      if (dtlsState === 'closed') { transport.close(); }
+      if (dtlsState === 'closed') {
+        console.log('dtlsState ===', 'closed');
+        transport.close();
+      }
     });
 
     transport.on('@close', () => {
