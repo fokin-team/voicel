@@ -185,7 +185,7 @@ class WebRtc {
   }
 
   initSockets() {
-
+    this.ws.on('consumerClosed')
   }
 
   async produce() {
