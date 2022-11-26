@@ -13,7 +13,7 @@ import {
   filter, first, mergeMap, share, takeUntil,
 } from 'rxjs/operators';
 import { pack, unpack } from 'msgpackr';
-import {MessageMetaData} from "@/ws/ws.message-meta-data.decorator";
+import { MessageMetaData } from "@/ws/ws.message-meta-data.decorator";
 
 let wsPackage: any = {};
 
