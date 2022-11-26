@@ -19,6 +19,7 @@ import { JoinDto } from "./dto/join.dto";
 import {EnvironmentVariables} from '../configuration';
 import { ProduceDto } from "./dto/produce-dto";
 import { ConsumeDto } from "./dto/consume.dto";
+import { ConnectTransportDto } from "./dto/connect-transport.dto";
 
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
@@ -178,5 +179,20 @@ export class ConnectionsGateway {
     } catch (e) {
       throw e;
     }
+  }
+
+  @MessageMetaData('connect-transport')
+  @SubscribeMessage('connect-transport')
+  async connectTransport(
+    @MessageBody() body: ConnectTransportDto,
+    @ConnectedSocket() client: WebSocketEntity
+  ) {
+    if (!this.roomList.has(client.roomId)) {
+      return;
+    }
+
+    await this.roomList.get(client.roomId).connectPeerTransport(client.socketId, body.transportId, body.dtlsParameters);
+
+    return {};
   }
 }
