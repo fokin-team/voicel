@@ -3,6 +3,23 @@ import { Device, types as MediasoupTypes } from 'mediasoup-client';
 import { WebSocketProvider } from '@/utils/WebSocket';
 import { Emitter } from '@/utils/shared/Emitter';
 
+enum MediaType {
+  audio = 'audio',
+  video = 'video',
+  screen = 'screen',
+}
+
+enum Events {
+  exitRoom = 'exit-room',
+  openRoom = 'open-room',
+  startVideo = 'start-video',
+  stopVideo = 'stop-video',
+  startAudio = 'start-audio',
+  stopAudio = 'stop-audio',
+  startScreen = 'start-screen',
+  stopScreen = 'stop-screen',
+}
+
 class WebRtc {
   public name: string;
 
@@ -17,6 +34,8 @@ class WebRtc {
   public roomId = '';
 
   public producerTransport: MediasoupTypes.Transport | undefined = undefined;
+
+  public producerLabel = new Map();
 
   public consumerTransport: MediasoupTypes.Transport | undefined = undefined;
 
@@ -57,7 +76,6 @@ class WebRtc {
 
   async join(roomId: string) {
     const room = await this.ws.emitPromised('join', { roomId });
-    console.log(room);
     const responseRtpCapabilities = await this.ws.emitPromised<MediasoupTypes.RtpCapabilities>('get-rtp-capabilities');
     if (!responseRtpCapabilities.status) {
       throw new Error(responseRtpCapabilities.errors as string);
@@ -74,8 +92,7 @@ class WebRtc {
       return device;
     } catch (e) {
       if ((e as MediasoupTypes.UnsupportedError)?.name === 'UnsupportedError') {
-        console.error('Browser not supported');
-        alert('Browser not supported');
+        console.error('[loadDevice] Browser not supported');
       }
 
       throw new Error((e as MediasoupTypes.UnsupportedError).message);
@@ -185,11 +202,160 @@ class WebRtc {
   }
 
   initSockets() {
-    this.ws.on('consumerClosed')
+    this.ws.on('consumer-closed', (data: { consumerId: string }) => {
+      console.log('[initSockets]: consumer-closed: ', data.consumerId);
+    });
+
+    this.ws.on('new-producers', (data: unknown) => {
+      console.log('[initSockets]: new-producers: ', data);
+    });
+
+    this.ws.on('disconnect', () => {
+      console.log('[initSockets]: disconnect');
+    });
+
+    this.isOpen = true;
   }
 
-  async produce() {
+  async produce(mediaType: keyof typeof MediaType, deviceId = null) {
+    let mediaConstraints = {};
+    let audio = false;
+    let screen = false;
 
+    switch (mediaType) {
+      case MediaType.audio:
+        mediaConstraints = {
+          audio: {
+            deviceId,
+          },
+          video: false,
+        };
+        audio = true;
+        break;
+      case MediaType.video:
+        mediaConstraints = {
+          audio: false,
+          video: {
+            width: {
+              min: 640,
+              ideal: 1920,
+            },
+            height: {
+              min: 400,
+              ideal: 1080,
+            },
+            deviceId,
+          },
+        };
+        break;
+      case MediaType.screen:
+        mediaConstraints = false;
+        screen = true;
+        break;
+      default:
+    }
+
+    if (!this.device?.canProduce('video') && !audio) {
+      throw new Error('[produce] Cannot produce video');
+    }
+
+    if (this.producerLabel.has(mediaType)) {
+      throw new Error(`[produce] Producer already exists for this type ${mediaType}`);
+    }
+
+    console.log('[produce] Mediacontraints:', mediaConstraints);
+
+    let stream: MediaStream;
+
+    try {
+      stream = screen
+        ? await navigator.mediaDevices.getDisplayMedia()
+        : await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
+      const track = audio ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0];
+
+      const params: MediasoupTypes.ProducerOptions = {
+        track,
+      };
+
+      if (!audio && !screen) {
+        params.encodings = [
+          {
+            rid: 'r0',
+            maxBitrate: 100000,
+            // scaleResolutionDownBy: 10.0,
+            scalabilityMode: 'S1T3',
+          },
+          {
+            rid: 'r1',
+            maxBitrate: 300000,
+            scalabilityMode: 'S1T3',
+          },
+          {
+            rid: 'r2',
+            maxBitrate: 900000,
+            scalabilityMode: 'S1T3',
+          },
+        ];
+        params.codecOptions = {
+          videoGoogleStartBitrate: 1000,
+        };
+      }
+
+      const producer = await this.producerTransport?.produce(params);
+
+      if (typeof producer === 'undefined') {
+        throw new Error('[produce] error producer create');
+      }
+
+      console.log('[produce] Producer', producer);
+
+      this.producers.set(producer.id, producer);
+
+      let localMediaElement: HTMLElement | undefined;
+
+      if (!audio) {
+        localMediaElement = document.createElement('video');
+      }
+
+      producer.on('trackended', () => {
+        this.closeProducer(mediaType);
+      });
+
+      producer.on('transportclose', () => {
+        console.log('Producer transport close');
+        if (!audio) {
+          // TODO: delete media element;
+        }
+        this.producers.delete(producer.id);
+      });
+
+      producer.on('@close', () => {
+        console.log('Closing producer');
+        if (!audio) {
+          // TODO: delete media element;
+        }
+        this.producers.delete(producer.id);
+      });
+
+      this.producerLabel.set(mediaType, producer.id);
+
+      switch (mediaType) {
+        case MediaType.audio:
+          this.emitter.emit(Events.startAudio);
+          break;
+        case MediaType.video:
+          this.emitter.emit(Events.startVideo);
+          break;
+        case MediaType.screen:
+          this.emitter.emit(Events.startScreen);
+          break;
+        default:
+          return;
+      }
+    } catch (e) {
+      throw new Error(e as string);
+    }
   }
 
   async consume() {
@@ -200,15 +366,15 @@ class WebRtc {
 
   }
 
-  closeProducer(producerId: string) {
+  closeProducer(mediaType: keyof typeof MediaType) {
 
   }
 
-  pauseProducer(producerId: string) {
+  pauseProducer(mediaType: keyof typeof MediaType) {
 
   }
 
-  resumeProducer(producerId: string) {
+  resumeProducer(mediaType: keyof typeof MediaType) {
 
   }
 
