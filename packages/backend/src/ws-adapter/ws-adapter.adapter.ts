@@ -53,6 +53,10 @@ export class WsAdapter extends AbstractWsAdapter {
     port: number,
     options?: Record<string, any> & { namespace?: string; server?: any },
   ) {
+    if (options == null) {
+      return;
+    }
+
     const { server, ...wsOptions } = options;
     if (wsOptions?.namespace) {
       const error = new Error(
@@ -191,8 +195,15 @@ export class WsAdapter extends AbstractWsAdapter {
 
     httpServer.on('upgrade', (request, socket, head) => {
       const baseUrl = `ws://${request.headers.host}/`;
+      if (request.url == null) {
+        return;
+      }
+
       const { pathname } = new URL(request.url, baseUrl);
       const wsServersCollection = this.wsServersRegistry.get(port);
+      if (wsServersCollection == null) {
+        return;
+      }
 
       let isRequestDelegated = false;
       for (const wsServer of wsServersCollection) {
