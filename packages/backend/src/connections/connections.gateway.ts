@@ -20,6 +20,7 @@ import { ConsumeDto } from './dto/consume.dto';
 import { ConnectTransportDto } from './dto/connect-transport.dto';
 
 import { EnvironmentVariables } from '../configuration';
+import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
@@ -79,18 +80,14 @@ export class ConnectionsGateway {
       throw new Error('Room already exists');
     } else {
       let worker = await this.getWorker();
-
-      const all = (data) => {
-        for (const [socketId, v] of this.roomList.get(roomId).getPeers()) {
-          this.wsService.sendEventBySocketId(roomId, socketId, data);
-        }
-      };
-
+      
       const result = {
         single: (socketId, data) => {
           this.wsService.sendEventBySocketId(roomId, socketId, data);
         },
-        all,
+        all: (data) => {
+          this.wsService.emitToAllRoomSessions(roomId, data);
+        },
       };
 
       this.roomList.set(roomId, new Room(roomId, worker, result));
@@ -102,6 +99,20 @@ export class ConnectionsGateway {
         },
       };
     }
+  }
+
+  @MessageMetaData('producer-сlosed')
+  @SubscribeMessage('producer-сlosed')
+  async producerClosed(
+    @MessageBody() body: ProducerClosedDto,
+    @ConnectedSocket() client: WebSocketEntity,
+  ): Promise<WsResponse<void>> {
+    this.roomList.get(client.roomId).closeProducer(client.socketId, body.producerId);
+
+    return {
+      event: 'producer-сlosed',
+      data: undefined,
+    };
   }
 
   @MessageMetaData('join')
