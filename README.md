@@ -17,6 +17,7 @@
 ![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
 
 # Voicel
+[![Docker Image CI](https://github.com/fokin-team/voicel/actions/workflows/deployment.yml/badge.svg)](https://github.com/fokin-team/voicel/actions/workflows/deployment.yml)
 
 Voicel — это ВКС-система на базе низкоуровневой С++ библиотеки [mediasoup](https://github.com/versatica/mediasoup/).
 
