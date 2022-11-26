@@ -1,18 +1,11 @@
 # Base project configuration
 FROM node:18.7.0-buster as build
 
+WORKDIR /usr/src/app
+
 RUN apt-get update || : && apt-get install python -y
 RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN python3 get-pip.py
-
 RUN npm i -g @nestjs/cli
 
-COPY package*.json ./
-
-RUN npm ci --cache .npm --prefer-offline
-
 COPY . .
-
-RUN npm run build
-
-CMD ["npm", "run", "start:prod"]

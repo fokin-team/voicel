@@ -5,6 +5,7 @@ services:
     build:
       context: ./packages/backend
       dockerfile: Dockerfile
+    command: ./init.sh
     environment:
       NODE_ENV: production
     container_name: voicel-backend-production
