@@ -14,7 +14,8 @@ services:
       # for development
       - ./packages/backend:/usr/src/app
     ports:
-      - "3000"
+      - 3000
+      - 8080
     networks:
       - nginx
   web-app:
@@ -24,7 +25,7 @@ services:
     container_name: voicel-web-app-production
     restart: always
     ports:
-      - "80"
+      - 80
     networks:
       - nginx
     command: nginx -g "daemon off;"
