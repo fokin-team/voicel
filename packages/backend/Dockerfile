@@ -9,3 +9,5 @@ RUN python3 get-pip.py
 RUN npm i -g @nestjs/cli
 
 COPY . .
+
+EXPOSE 3000 8080
