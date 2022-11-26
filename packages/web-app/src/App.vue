@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useInitialStore } from '@/stores/initialStore';
+import AppProvider from '@/AppProvider.vue';
 
 const initialStore = useInitialStore();
 
@@ -23,9 +24,9 @@ window.addEventListener('resize', () => {
 </script>
 
 <template>
-  <div>
-    123
-  </div>
+  <app-provider>
+    <router-view />
+  </app-provider>
 </template>
 
 <style lang="scss">
