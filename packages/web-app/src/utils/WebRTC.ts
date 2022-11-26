@@ -31,6 +31,8 @@ class WebRtc {
 
   public ws: WebSocketProvider;
 
+  private wsListeners = new Map<string, string>();
+
   public roomId = '';
 
   public producerTransport: MediasoupTypes.Transport | undefined = undefined;
@@ -202,17 +204,23 @@ class WebRtc {
   }
 
   initSockets() {
-    this.ws.on('consumer-closed', (data: { consumerId: string }) => {
+    const consumerClosedListenerId = this.ws.on('consumer-closed', (data: { consumerId: string }) => {
       console.log('[initSockets]: consumer-closed: ', data.consumerId);
     });
 
-    this.ws.on('new-producers', (data: unknown) => {
+    this.wsListeners.set('consumer-closed', consumerClosedListenerId);
+
+    const newProducersListenerId = this.ws.on('new-producers', (data: unknown) => {
       console.log('[initSockets]: new-producers: ', data);
     });
 
-    this.ws.on('disconnect', () => {
+    this.wsListeners.set('new-producers', newProducersListenerId);
+
+    const disconnectListenerId = this.ws.on('disconnect', () => {
       console.log('[initSockets]: disconnect');
     });
+
+    this.wsListeners.set('disconnect', disconnectListenerId);
 
     this.isOpen = true;
   }
@@ -430,11 +438,50 @@ class WebRtc {
 
   }
 
-  exit() {
+  async exit(offline = false) {
+    const clean = () => {
+      this.isOpen = false;
+      this.consumerTransport?.close();
+      this.producerTransport?.close();
+
+      const consumerClosedListenerId = this.wsListeners.get('consumer-closed');
+      const newProducersListenerId = this.wsListeners.get('new-producers');
+      const disconnectListenerId = this.wsListeners.get('disconnect');
+
+      if (typeof consumerClosedListenerId !== 'undefined') {
+        this.ws.removeOn('consumer-closed', consumerClosedListenerId);
+      } else {
+        console.warn('[exit] consumer-closed listener is not exist');
+      }
+
+      if (typeof newProducersListenerId !== 'undefined') {
+        this.ws.removeOn('new-producers', newProducersListenerId);
+      } else {
+        console.warn('[exit] new-producers listener is not exist');
+      }
+
+      if (typeof disconnectListenerId !== 'undefined') {
+        this.ws.removeOn('disconnect', disconnectListenerId);
+      } else {
+        console.warn('[exit] disconnect listener is not exist');
+      }
+    };
+
+    if (!offline) {
+      const responseExitRoom = await this.ws.emitPromised('exit-room');
+      if (!responseExitRoom.status) {
+        throw new Error(`[exit] exit room failed ${responseExitRoom.errors as string}`);
+      }
+      clean();
+    } else {
+      clean();
+    }
+
+    this.emitter.emit(Events.exitRoom);
   }
 
-  async getRoomInfo() {
-
+  getRoomInfo() {
+    return 'скоро будет! 🤯😵‍';
   }
 }
 
