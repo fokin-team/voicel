@@ -3,7 +3,11 @@ import {
   ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway,
 } from '@nestjs/websockets';
 
+import { UseFilters } from '@nestjs/common';
+
 import { WsResponse } from '@/ws/interfaces/ws.response.interface';
+import { WsFormatException } from '@/ws/exceptions/ws.format.exception';
+import { WsFilterException } from '@/ws/exceptions/ws.filter.exception';
 
 import { createWorker } from 'mediasoup';
 
@@ -24,6 +28,7 @@ import { ConnectTransportDto } from './dto/connect-transport.dto';
 import { EnvironmentVariables } from '../configuration';
 import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
+@UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
   constructor(
@@ -79,7 +84,10 @@ export class ConnectionsGateway {
     const roomId = nanoid();
 
     if (this.roomList.has(roomId)) {
-      throw new Error('Room already exists');
+      throw new WsFormatException({
+        event: 'create-room',
+        message: 'Room already exists'
+      });
     } else {
       let worker = await this.getWorker();
       
@@ -130,7 +138,7 @@ export class ConnectionsGateway {
         peers: string;
       }>> {
     if (!this.roomList.has(body.roomId)) {
-      throw new Error('Room does not exist');
+      throw new WsFormatException('Room does not exist');
     }
 
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name));
@@ -168,7 +176,10 @@ export class ConnectionsGateway {
         producerId: string;
       }>> {
     if (!this.roomList.has(client.roomId)) {
-      throw new Error('Room not found');
+      throw new WsFormatException({
+        event: 'produce',
+        message: 'Room not found'
+      });
     }
 
     const producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
@@ -213,7 +224,7 @@ export class ConnectionsGateway {
     }
 
     if (!this.roomList.has(client.roomId)) {
-      throw new Error('Room not found');
+      return;
     }
 
     await this.roomList.get(client.roomId).removePeer(client.socketId);
@@ -222,8 +233,6 @@ export class ConnectionsGateway {
     }
 
     client.roomId = null;
-
-    return {};
   }
 
   @MessageMetaData('get-producers')
@@ -260,7 +269,10 @@ export class ConnectionsGateway {
         },
       };
     } catch (e) {
-      throw e;
+      throw new WsFormatException({
+        event: 'get-rtp-capabilities',
+        message: e.toString(),
+      });
     }
   }
 
@@ -277,7 +289,10 @@ export class ConnectionsGateway {
         },
       };
     } catch (e) {
-      throw e;
+      throw new WsFormatException({
+        event: 'create-rtc-transport',
+        message: e.toString(),
+      });
     }
   }
 
