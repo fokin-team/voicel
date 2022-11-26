@@ -324,16 +324,18 @@ class WebRtc {
 
       if (!audio) {
         localMediaElement = document.createElement('video');
+        // TODO: Add produce media content to DOM
       }
 
       producer.on('trackended', () => {
+        console.log('[produce] Producer track close');
         this.closeProducer(mediaType);
       });
 
       producer.on('transportclose', () => {
         console.log('[produce] Producer transport close');
         if (!audio) {
-          // TODO: Delete media content from DOM;
+          // TODO: Delete media content from DOM
         }
         this.producers.delete(producer.id);
       });
@@ -341,7 +343,7 @@ class WebRtc {
       producer.on('@close', () => {
         console.log('[produce] Closing producer');
         if (!audio) {
-          // TODO: Delete media content from DOM;
+          // TODO: Delete media content from DOM
         }
         this.producers.delete(producer.id);
       });
@@ -366,12 +368,63 @@ class WebRtc {
     }
   }
 
-  async consume() {
+  async consume(producerId: string) {
+    const { consumer, stream, kind } = await this.getConsumeStream(producerId);
 
+    this.consumers.set(consumer.id, consumer);
+
+    // TODO: Add consume media content to DOM
+
+    consumer.on('trackended', () => {
+      console.log('[consume] Consumer track close');
+      this.removeConsumer(consumer.id);
+    });
+
+    consumer.on('transportclose', () => {
+      console.log('[consume] Consumer transport close');
+      this.removeConsumer(consumer.id);
+    });
   }
 
   async getConsumeStream(producerId: string) {
+    if (typeof this.device === 'undefined') {
+      throw new Error('[getConsumeStream] device is undefined');
+    }
+    const { rtpCapabilities } = this.device;
 
+    const responseConsume = await this.ws.emitPromised<MediasoupTypes.ConsumerOptions>('consume', {
+      rtpCapabilities,
+      consumerTransportId: this.consumerTransport?.id,
+      producerId,
+    });
+
+    if (!responseConsume.status) {
+      throw new Error(`[getConsumeStream] get response consume options failed ${responseConsume.errors.toString()}`);
+    }
+
+    const { id, kind, rtpParameters } = responseConsume.data;
+
+    const consumer = await this.consumerTransport?.consume({
+      id,
+      producerId,
+      kind,
+      rtpParameters,
+      appData: {},
+    });
+
+    if (typeof consumer === 'undefined') {
+      throw new Error('[getConsumeStream] consumer create failed');
+    }
+
+    const stream = new MediaStream();
+
+    stream.addTrack(consumer.track);
+
+    return {
+      consumer,
+      stream,
+      kind,
+    };
   }
 
   closeProducer(mediaType: keyof typeof MediaType) {
@@ -392,7 +445,7 @@ class WebRtc {
     this.producerLabel.delete(mediaType);
 
     if (mediaType !== MediaType.audio) {
-      // TODO: Delete media content from DOM;
+      // TODO: Delete media content from DOM
     }
 
     switch (mediaType) {
@@ -439,7 +492,7 @@ class WebRtc {
       throw new Error(`[removeConsumer] producer with type ${consumerId} not exists`);
     }
 
-    // TODO: Delete media content from DOM;
+    // TODO: Delete media content from DOM
 
     this.consumers.delete(consumerId);
   }
