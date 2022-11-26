@@ -1,6 +1,6 @@
 FROM node:18.7.0-alpine as build-stage
 
-COPY package*.json /.
+COPY package*.json .
 
 COPY . .
 
