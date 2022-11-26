@@ -16,7 +16,7 @@
     "dev": "vite",
     "dev:prod-server": "cross-env SW_DEV=true SOURCE_MAP=true vite --mode production",
     "build:dev": "vue-tsc --noEmit && vite build --emptyOutDir --mode development",
-    "build:prod": "vue-tsc --noEmit && vite build --emptyOutDir",
+    "build:prod": "vite build --emptyOutDir",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
