@@ -42,7 +42,6 @@ class WebRtc {
   }
 
   async createRoom() {
-    console.log('create-room');
     const room = await this.ws.emitPromised('create-room');
     console.log(room);
   }

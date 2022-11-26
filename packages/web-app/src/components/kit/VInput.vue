@@ -39,6 +39,7 @@ const props = defineProps({
     default: () => [],
   },
 });
+
 const emit = defineEmits(['update:value', 'focus']);
 const isPasswordVisionPress = ref(false);
 const typePassword = computed(() => (!isPasswordVisionPress.value ? 'password' : 'text'));
@@ -52,6 +53,7 @@ const inputRef = ref<null | HTMLInputElement>(null);
 const isMessagesNotEmpty = computed(() => props.messages.length !== 0);
 const messagesContainerHeight = computed(() => `${props.messages.length
 + props.messages.length * 0.125}rem`);
+
 const sizeCalculate = (size: string | number) => {
   if (size === 'medium') {
     return 2.75;
@@ -67,32 +69,39 @@ const sizeValue = computed(() => {
   }
   return sizeCalculate(props.size);
 });
+
 const inputStyle = computed(() => ({
   height: sizeValue.value,
   borderRadiusRound: `${sizeValue.value}rem`,
 }));
+
 const labelStyle = computed(() => ({
   top: `${sizeValue.value / 2 - 0.75}rem`,
   topAfterFocus: `-${0.8}rem`,
   transform: `scale(0.7) translate(0, -${(sizeValue.value / 2)}rem)`,
 }));
+
 const onClickClearHandler = () => {
   emit('update:value', '');
 };
+
 const onClick = () => {
   if (!isInputFocus.value && inputRef.value !== null) {
     inputRef.value.focus();
     isInputFocus.value = true;
   }
 };
+
 const onFocusOut = (e: FocusEvent) => {
   if (e.target !== document.activeElement && !(e.relatedTarget as HTMLElement)?.classList?.contains('button-action')) {
     isInputFocus.value = false;
   }
 };
+
 const onInput = (e: Event) => {
   emit('update:value', (e.target as HTMLInputElement).value);
 };
+
 const onFocus = () => {
   if (!isInputFocus.value && inputRef.value !== null) {
     inputRef.value.focus();
@@ -100,6 +109,7 @@ const onFocus = () => {
   }
   emit('focus');
 };
+
 const onButtonPasswordVisionClick = async () => {
   if (inputRef.value !== null) {
     isPasswordVisionPress.value = !isPasswordVisionPress.value;
@@ -109,6 +119,7 @@ const onButtonPasswordVisionClick = async () => {
     inputRef.value.focus();
   }
 };
+
 const root = document.querySelector(':root');
 const clearIconFillColor = ref('black');
 if (root) {
@@ -201,6 +212,7 @@ if (root) {
 .v-input-container-base {
   width: 100%;
   --border-width: 1px;
+
   .v-input-field {
     width: 100%;
     display: flex;
@@ -210,9 +222,11 @@ if (root) {
     &.focus {
       caret-color: var(--color-primary);
     }
+
     .v-input-content {
       position: relative;
       width: 100%;
+
       .v-input {
         display: block;
         width: 100%;
@@ -226,6 +240,7 @@ if (root) {
         border-radius: 0;
         background-color: transparent;
       }
+
       .v-input-label {
         display: block;
         position: absolute;
@@ -249,6 +264,7 @@ if (root) {
       justify-content: center;
     }
   }
+
   .v-input-messages {
     margin-top: 0.25rem;
     display: flex;
@@ -263,6 +279,7 @@ if (root) {
       min-height: unset;
     }
   }
+
   .messages-enter-active,
   .messages-leave-active {
     transition: all .2s ease;
@@ -273,10 +290,12 @@ if (root) {
     transform: translateY(-20px);
   }
 }
+
 .v-input-container-default {
   .v-input-field {
     border-radius: var(--border-radius-default);
-    background-color: var(--color-chat-hover);
+    background-color: var(--color-background-secondary);
+
     .v-input-content {
       .v-input {
       }
@@ -291,6 +310,7 @@ if (root) {
     }
   }
 }
+
 .v-input-container-form {
   .v-input-field {
     border-radius: var(--border-radius-default);
@@ -327,6 +347,7 @@ if (root) {
     }
   }
 }
+
 .v-input-container-search {
   .v-input-field {
     border-radius: var(--border-radius-default);
@@ -348,6 +369,7 @@ if (root) {
     }
   }
 }
+
 .v-input-container-base {
   .v-input-field {
     &.round {
