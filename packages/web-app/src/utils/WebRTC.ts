@@ -31,17 +31,19 @@ class WebRtc {
 
   public ws: WebSocketProvider;
 
+  private wsListeners = new Map<string, string>();
+
   public roomId = '';
 
   public producerTransport: MediasoupTypes.Transport | undefined = undefined;
 
-  public producerLabel = new Map<string, string>();
-
   public consumerTransport: MediasoupTypes.Transport | undefined = undefined;
 
-  public consumers = new Map();
+  public consumers = new Map<string, MediasoupTypes.Consumer>();
 
-  public producers = new Map();
+  public producers = new Map<string, MediasoupTypes.Producer>();
+
+  public producerLabel = new Map<string, string>();
 
   public device: Device | undefined = undefined;
 
@@ -202,17 +204,23 @@ class WebRtc {
   }
 
   initSockets() {
-    this.ws.on('consumer-closed', (data: { consumerId: string }) => {
+    const consumerClosedListenerId = this.ws.on('consumer-closed', (data: { consumerId: string }) => {
       console.log('[initSockets]: consumer-closed: ', data.consumerId);
     });
 
-    this.ws.on('new-producers', (data: unknown) => {
+    this.wsListeners.set('consumer-closed', consumerClosedListenerId);
+
+    const newProducersListenerId = this.ws.on('new-producers', (data: unknown) => {
       console.log('[initSockets]: new-producers: ', data);
     });
 
-    this.ws.on('disconnect', () => {
+    this.wsListeners.set('new-producers', newProducersListenerId);
+
+    const disconnectListenerId = this.ws.on('disconnect', () => {
       console.log('[initSockets]: disconnect');
     });
+
+    this.wsListeners.set('disconnect', disconnectListenerId);
 
     this.isOpen = true;
   }
@@ -316,16 +324,18 @@ class WebRtc {
 
       if (!audio) {
         localMediaElement = document.createElement('video');
+        // TODO: Add produce media content to DOM
       }
 
       producer.on('trackended', () => {
+        console.log('[produce] Producer track close');
         this.closeProducer(mediaType);
       });
 
       producer.on('transportclose', () => {
         console.log('[produce] Producer transport close');
         if (!audio) {
-          // TODO: delete media element;
+          // TODO: Delete media content from DOM
         }
         this.producers.delete(producer.id);
       });
@@ -333,7 +343,7 @@ class WebRtc {
       producer.on('@close', () => {
         console.log('[produce] Closing producer');
         if (!audio) {
-          // TODO: delete media element;
+          // TODO: Delete media content from DOM
         }
         this.producers.delete(producer.id);
       });
@@ -351,19 +361,70 @@ class WebRtc {
           this.emitter.emit(Events.startScreen);
           break;
         default:
-          return;
+          break;
       }
     } catch (e) {
       throw new Error(e as string);
     }
   }
 
-  async consume() {
+  async consume(producerId: string) {
+    const { consumer, stream, kind } = await this.getConsumeStream(producerId);
 
+    this.consumers.set(consumer.id, consumer);
+
+    // TODO: Add consume media content to DOM
+
+    consumer.on('trackended', () => {
+      console.log('[consume] Consumer track close');
+      this.removeConsumer(consumer.id);
+    });
+
+    consumer.on('transportclose', () => {
+      console.log('[consume] Consumer transport close');
+      this.removeConsumer(consumer.id);
+    });
   }
 
   async getConsumeStream(producerId: string) {
+    if (typeof this.device === 'undefined') {
+      throw new Error('[getConsumeStream] device is undefined');
+    }
+    const { rtpCapabilities } = this.device;
 
+    const responseConsume = await this.ws.emitPromised<MediasoupTypes.ConsumerOptions>('consume', {
+      rtpCapabilities,
+      consumerTransportId: this.consumerTransport?.id,
+      producerId,
+    });
+
+    if (!responseConsume.status) {
+      throw new Error(`[getConsumeStream] get response consume options failed ${responseConsume.errors.toString()}`);
+    }
+
+    const { id, kind, rtpParameters } = responseConsume.data;
+
+    const consumer = await this.consumerTransport?.consume({
+      id,
+      producerId,
+      kind,
+      rtpParameters,
+      appData: {},
+    });
+
+    if (typeof consumer === 'undefined') {
+      throw new Error('[getConsumeStream] consumer create failed');
+    }
+
+    const stream = new MediaStream();
+
+    stream.addTrack(consumer.track);
+
+    return {
+      consumer,
+      stream,
+      kind,
+    };
   }
 
   closeProducer(mediaType: keyof typeof MediaType) {
@@ -371,32 +432,115 @@ class WebRtc {
       throw new Error(`[closeProducer] producer with type ${mediaType} not exists`);
     }
 
-    const producerId = this.producerLabel.get(mediaType);
+    const producerId = this.producerLabel.get(mediaType) as string;
 
     console.log('[closeProducer] Close producer', producerId);
 
     this.ws.emit('producer-closed', {
       producerId,
     });
+
+    this.producers.get(producerId)?.close();
+    this.producers.delete(producerId);
+    this.producerLabel.delete(mediaType);
+
+    if (mediaType !== MediaType.audio) {
+      // TODO: Delete media content from DOM
+    }
+
+    switch (mediaType) {
+      case MediaType.audio:
+        this.emitter.emit(Events.stopAudio);
+        break;
+      case MediaType.video:
+        this.emitter.emit(Events.stopVideo);
+        break;
+      case MediaType.screen:
+        this.emitter.emit(Events.stopScreen);
+        break;
+      default:
+        break;
+    }
   }
 
   pauseProducer(mediaType: keyof typeof MediaType) {
+    if (!this.producerLabel.has(mediaType)) {
+      throw new Error(`[pauseProducer] producer with type ${mediaType} not exists`);
+    }
 
+    const producerId = this.producerLabel.get(mediaType) as string;
+
+    console.log('[pauseProducer] pause producer', producerId);
+
+    this.producers.get(producerId)?.pause();
   }
 
   resumeProducer(mediaType: keyof typeof MediaType) {
+    if (!this.producerLabel.has(mediaType)) {
+      throw new Error(`[resumeProducer] producer with type ${mediaType} not exists`);
+    }
 
+    const producerId = this.producerLabel.get(mediaType) as string;
+
+    console.log('[resumeProducer] pause producer', producerId);
+
+    this.producers.get(producerId)?.resume();
   }
 
   removeConsumer(consumerId: string) {
+    if (!this.consumers.has(consumerId)) {
+      throw new Error(`[removeConsumer] producer with type ${consumerId} not exists`);
+    }
 
+    // TODO: Delete media content from DOM
+
+    this.consumers.delete(consumerId);
   }
 
-  exit() {
+  async exit(offline = false) {
+    const clean = () => {
+      this.isOpen = false;
+      this.consumerTransport?.close();
+      this.producerTransport?.close();
+
+      const consumerClosedListenerId = this.wsListeners.get('consumer-closed');
+      const newProducersListenerId = this.wsListeners.get('new-producers');
+      const disconnectListenerId = this.wsListeners.get('disconnect');
+
+      if (typeof consumerClosedListenerId !== 'undefined') {
+        this.ws.removeOn('consumer-closed', consumerClosedListenerId);
+      } else {
+        console.warn('[exit] consumer-closed listener is not exist');
+      }
+
+      if (typeof newProducersListenerId !== 'undefined') {
+        this.ws.removeOn('new-producers', newProducersListenerId);
+      } else {
+        console.warn('[exit] new-producers listener is not exist');
+      }
+
+      if (typeof disconnectListenerId !== 'undefined') {
+        this.ws.removeOn('disconnect', disconnectListenerId);
+      } else {
+        console.warn('[exit] disconnect listener is not exist');
+      }
+    };
+
+    if (!offline) {
+      const responseExitRoom = await this.ws.emitPromised('exit-room');
+      if (!responseExitRoom.status) {
+        throw new Error(`[exit] exit room failed ${responseExitRoom.errors as string}`);
+      }
+      clean();
+    } else {
+      clean();
+    }
+
+    this.emitter.emit(Events.exitRoom);
   }
 
-  async getRoomInfo() {
-
+  getRoomInfo() {
+    return 'скоро будет! 🤯😵‍';
   }
 }
 
