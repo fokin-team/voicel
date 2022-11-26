@@ -28,7 +28,7 @@ import { ConnectTransportDto } from './dto/connect-transport.dto';
 import { EnvironmentVariables } from '../configuration';
 import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
-@UseFilters(WsFilterException)
+// @UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway {
   constructor(
@@ -90,7 +90,7 @@ export class ConnectionsGateway {
       });
     } else {
       let worker = await this.getWorker();
-      
+
       const result = {
         single: (socketId, data) => {
           this.wsService.sendEventBySocketId(roomId, socketId, data);
