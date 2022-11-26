@@ -1,6 +1,6 @@
 import {WsService} from "@/ws/ws.service";
 import {
-  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway,
+  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WsResponse,
 } from '@nestjs/websockets';
 
 import {createWorker} from 'mediasoup';
@@ -72,7 +72,7 @@ export class ConnectionsGateway {
 
   @MessageMetaData('create-room')
   @SubscribeMessage('create-room')
-  async createRoom() {
+  async createRoom(): Promise<WsResponse<{ roomId: string; }>> {
     const roomId = nanoid();
 
     if (this.roomList.has(roomId)) {
@@ -82,7 +82,10 @@ export class ConnectionsGateway {
       this.roomList.set(roomId, new Room(roomId, worker));
 
       return {
-        roomId,
+        event: 'create-room',
+        data: {
+          roomId: roomId,
+        },
       };
     }
   }
@@ -92,20 +95,32 @@ export class ConnectionsGateway {
   async join(
     @MessageBody() body: JoinDto,
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
+  ): Promise<WsResponse<{
+    id: string;
+    peers: string;
+  }>> {
     if (!this.roomList.has(body.roomId)) {
       throw new Error('Room does not exist');
     }
 
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name))
 
-    return this.roomList.get(body.roomId).toJson();
+    return {
+      event: 'join',
+      data: this.roomList.get(body.roomId).toJson()
+    };
   }
 
   @MessageMetaData('get-room')
   @SubscribeMessage('get-room')
-  async getRoomById(@MessageBody() body: JoinDto) {
-    return this.roomList.get(body.roomId).toJson();
+  async getRoomById(@MessageBody() body: JoinDto): Promise<WsResponse<{
+    id: string;
+    peers: string;
+  }>> {
+    return {
+      event: 'get-room',
+      data: this.roomList.get(body.roomId).toJson(),
+    };
   }
 
   @MessageMetaData('produce')
@@ -113,7 +128,9 @@ export class ConnectionsGateway {
   async produce(
     @MessageBody() body: ProduceDto,
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
+  ): Promise<WsResponse<{
+    producerId: string;
+  }>> {
     if (!this.roomList.has(client.roomId)) {
       throw new Error('Room not found');
     }
@@ -121,7 +138,10 @@ export class ConnectionsGateway {
     let producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
 
     return {
-      producerId
+      event: 'produce',
+      data: {
+        producerId: producerId as any
+      },
     };
   }
 
@@ -130,9 +150,19 @@ export class ConnectionsGateway {
   async consume(
     @MessageBody() body: ConsumeDto,
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
-    let result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities)
-    return result;
+  ): Promise<WsResponse<{
+    producerId: string;
+    id: any;
+    kind: any;
+    rtpParameters: any;
+    type: any;
+    producerPaused: any;
+}>> {
+    let result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
+    return {
+      event: 'consume',
+      data: result,
+    };
   }
 
   async handleDisconnect(client: WebSocketEntity){
@@ -158,22 +188,28 @@ export class ConnectionsGateway {
   @SubscribeMessage('get-producers')
   async getProducers(
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
+  ): Promise<WsResponse<{
+    items: any[];
+  }>>{
     if (!this.roomList.has(client.roomId)) return
 
     let producerList = this.roomList.get(client.roomId).getProducerListForPeer();
 
     return {
-      items: producerList,
+      event: 'get-producers',
+      data: {
+        items: producerList,
+      },
     };
   }
 
   @MessageMetaData('get-rtp-capabilities')
   @SubscribeMessage('get-rtp-capabilities')
-  async getRtpCapabilities(@ConnectedSocket() client: WebSocketEntity) {
+  async getRtpCapabilities(@ConnectedSocket() client: WebSocketEntity): Promise<WsResponse<any>> {
     try {
       return {
-        items: this.roomList.get(client.roomId).getRtpCapabilities(),
+        event: 'get-rtp-capabilities',
+        data: this.roomList.get(client.roomId).getRtpCapabilities(),
       };
     } catch (e) {
       throw e;
@@ -182,10 +218,13 @@ export class ConnectionsGateway {
 
   @MessageMetaData('create-rtc-transport')
   @SubscribeMessage('create-rtc-transport')
-  async createRtcTransport(@ConnectedSocket() client: WebSocketEntity) {
+  async createRtcTransport(@ConnectedSocket() client: WebSocketEntity): Promise<WsResponse<any>> {
     try {
       const { params } = await this.roomList.get(client.roomId).createWebRtcTransport(client.socketId);
-      return params;
+      return {
+        event: 'create-rtc-transport',
+        data: params,
+      };
     } catch (e) {
       throw e;
     }
@@ -203,6 +242,9 @@ export class ConnectionsGateway {
 
     await this.roomList.get(client.roomId).connectPeerTransport(client.socketId, body.transportId, body.dtlsParameters);
 
-    return {};
+    return {
+      event: 'connect-transport',
+      data: {},
+    };
   }
 }
