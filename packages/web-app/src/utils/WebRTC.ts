@@ -333,7 +333,7 @@ class WebRtc {
       producer.on('transportclose', () => {
         console.log('[produce] Producer transport close');
         if (!audio) {
-          // TODO: delete media element;
+          // TODO: Delete media content from DOM;
         }
         this.producers.delete(producer.id);
       });
@@ -341,7 +341,7 @@ class WebRtc {
       producer.on('@close', () => {
         console.log('[produce] Closing producer');
         if (!audio) {
-          // TODO: delete media element;
+          // TODO: Delete media content from DOM;
         }
         this.producers.delete(producer.id);
       });
@@ -392,7 +392,7 @@ class WebRtc {
     this.producerLabel.delete(mediaType);
 
     if (mediaType !== MediaType.audio) {
-      // TODO: delete media element;
+      // TODO: Delete media content from DOM;
     }
 
     switch (mediaType) {
@@ -435,7 +435,13 @@ class WebRtc {
   }
 
   removeConsumer(consumerId: string) {
+    if (!this.consumers.has(consumerId)) {
+      throw new Error(`[removeConsumer] producer with type ${consumerId} not exists`);
+    }
 
+    // TODO: Delete media content from DOM;
+
+    this.consumers.delete(consumerId);
   }
 
   async exit(offline = false) {
