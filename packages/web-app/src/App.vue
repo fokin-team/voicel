@@ -1,4 +1,24 @@
 <script setup lang="ts">
+import { useInitialStore } from '@/stores/initialStore';
+
+const initialStore = useInitialStore();
+
+let vh = window.innerHeight * 0.01;
+document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+initialStore.$patch({
+  isMobile: window.innerWidth < 927,
+  isWideScreen: window.innerWidth > 1280,
+});
+
+window.addEventListener('resize', () => {
+  initialStore.$patch({
+    isMobile: window.innerWidth < 927,
+    isWideScreen: window.innerWidth > 1280,
+  });
+  vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+});
 
 </script>
 
