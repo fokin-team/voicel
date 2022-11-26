@@ -34,6 +34,8 @@ window.addEventListener('resize', () => {
 
 #app {
   height: 100%;
+  width: 100%;
+  display: flex;
 
   @media (max-width: 926px) {
     height: calc(var(--vh, 1vh) * 100);
@@ -42,5 +44,11 @@ window.addEventListener('resize', () => {
   @media (min-width: 927px) {
     --padding-containter: 1.5rem;
   }
+}
+
+.n-config-provider {
+  display: flex;
+  height: 100%;
+  width: 100%;
 }
 </style>
