@@ -11,9 +11,15 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
+    "start:prod": "npm run build:prod && npm run preview",
+    "start:dev": "npm run build:dev && npm run preview",
     "dev": "vite",
+    "dev:prod-server": "cross-env SW_DEV=true SOURCE_MAP=true vite --mode production",
+    "build:dev": "vue-tsc --noEmit && vite build --emptyOutDir --mode development",
     "build:prod": "vue-tsc --noEmit && vite build --emptyOutDir",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {
     "mediasoup-client": "^3.6.62",
