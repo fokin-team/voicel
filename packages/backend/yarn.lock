@@ -741,7 +741,7 @@
     "webpack" "5.74.0"
     "webpack-node-externals" "3.0.0"
 
-"@nestjs/common@^7.0.0 || ^8.0.0 || ^9.0.0", "@nestjs/common@^9.0.0":
+"@nestjs/common@^7.0.0 || ^8.0.0 || ^9.0.0", "@nestjs/common@^9.0.0", "@nestjs/common@^9.2.0":
   "integrity" "sha512-Ndcqak/ETYi+n1c5lFRPbxKLyUuM6DIOxcvfEFGfi0f6ad4dWDXRDx7z/n8V0l8+Y8djvvOHgf3t0e93w963Qg=="
   "resolved" "https://registry.npmjs.org/@nestjs/common/-/common-9.2.0.tgz"
   "version" "9.2.0"
@@ -760,7 +760,7 @@
     "lodash" "4.17.21"
     "uuid" "8.3.2"
 
-"@nestjs/core@^9.0.0":
+"@nestjs/core@^9.0.0", "@nestjs/core@^9.2.0":
   "integrity" "sha512-eVN7aXAavV+ImVt8mO+rQ5YyUP6lJtQKUtQHxHKzz6Wg+9Y67WWZS2uDcDX5NNcNijbWky5bqad86fgcK9Oqig=="
   "resolved" "https://registry.npmjs.org/@nestjs/core/-/core-9.2.0.tgz"
   "version" "9.2.0"

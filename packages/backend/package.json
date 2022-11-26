@@ -27,9 +27,9 @@
     "cert:linux-generate": "cd tools/mkcert && ./mkcert -cert-file cert.pem -key-file key.pem localhost"
   },
   "dependencies": {
-    "@nestjs/common": "^9.0.0",
+    "@nestjs/common": "^9.2.0",
     "@nestjs/config": "^2.2.0",
-    "@nestjs/core": "^9.0.0",
+    "@nestjs/core": "^9.2.0",
     "@nestjs/platform-fastify": "^9.2.0",
     "@nestjs/websockets": "^9.2.0",
     "mediasoup": "3.10.9",

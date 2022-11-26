@@ -10,7 +10,7 @@ RUN npm i -g @nestjs/cli
 
 COPY . .
 
-RUN npm instal  
+RUN npm ci  
 RUN npm run build
 
 EXPOSE 3000 3030 8080

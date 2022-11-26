@@ -9,30 +9,27 @@ import { WsStateValueInterface } from './interfaces/ws.state-value.interface';
 export class WsService {
   private readonly logger = new Logger(WsService.name);
 
-  /**
-   * 1-∞ — authorized users id
-   * */
   private webSocketState = new Map<string, WsStateValueInterface[]>();
 
-  public getConnectedWebSocketsByUserId(userId: string): WsStateValueInterface[] | undefined {
-    const webSockets = this.webSocketState.get(userId);
+  public getConnectedWebSocketsByRoomId(room: string): WsStateValueInterface[] | undefined {
+    const webSockets = this.webSocketState.get(room);
     return webSockets;
   }
 
-  public setConnectedWebSocketByUserId(userId: string, webSocket: WebSocketEntity): string {
-    if (!this.webSocketState.has(userId)) {
-      this.webSocketState.set(userId, []);
+  public setConnectedWebSocketByRoomId(room: string, webSocket: WebSocketEntity): string {
+    if (!this.webSocketState.has(room)) {
+      this.webSocketState.set(room, []);
     }
 
     const id = randomUUID();
 
-    this.webSocketState.get(userId).push({ id, client: webSocket });
+    this.webSocketState.get(room).push({ id, client: webSocket });
 
     return id;
   }
 
-  public emitToAllUserSessions(userId: string, data: unknown) {
-    this.webSocketState.get(userId)?.forEach((connection) => {
+  public emitToAllRoomSessions(room: string, data: unknown) {
+    this.webSocketState.get(room)?.forEach((connection) => {
       connection.client.send(pack(data));
     });
   }
@@ -58,12 +55,20 @@ export class WsService {
     return false;
   }
 
-  public sendEventByUserId(userId: string, data: unknown) {
-    const connections = this.getConnectedWebSocketsByUserId(userId);
-    if (connections) {
-      connections.forEach((connection) => {
+  public sendEventBySocketId(room: string, socketId: string, data: any) {
+    this.webSocketState.get(room)?.forEach((connection) => {
+      if (connection.id === socketId) {
         connection.client.send(pack(data));
-      });
-    }
+      }
+    });
   }
+
+  // public sendEventByUserId(userId: string, data: unknown) {
+    // const connections = this.getConnectedWebSocketsByUserId(userId);
+    // if (connections) {
+      // connections.forEach((connection) => {
+        // connection.client.send(pack(data));
+      // });
+    // }
+  // }
 }
