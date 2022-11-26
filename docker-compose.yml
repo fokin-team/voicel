@@ -15,6 +15,8 @@ services:
       - ./packages/backend:/usr/src/app
     ports:
       - "3000"
+    networks:
+      - nginx
   web-app:
     build:
       context: ./packages/web-app
@@ -23,4 +25,10 @@ services:
     restart: always
     ports:
       - "80"
+    networks:
+      - nginx
     command: nginx -g "daemon off;"
+
+networks:
+  nginx:
+    external: true
