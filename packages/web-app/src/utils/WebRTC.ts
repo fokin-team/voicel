@@ -402,20 +402,28 @@ class WebRtc {
     }
   }
 
-  pauseProducer(mediaType: keyof typeof MediaType) {
+  c(mediaType: keyof typeof MediaType) {
     if (!this.producerLabel.has(mediaType)) {
       throw new Error(`[pauseProducer] producer with type ${mediaType} not exists`);
     }
 
     const producerId = this.producerLabel.get(mediaType) as string;
 
-    console.log('[closeProducer] pause producer', producerId);
+    console.log('[resumeProducer] pause producer', producerId);
 
     this.producers.get(producerId)?.pause();
   }
 
   resumeProducer(mediaType: keyof typeof MediaType) {
+    if (!this.producerLabel.has(mediaType)) {
+      throw new Error(`[resumeProducer] producer with type ${mediaType} not exists`);
+    }
 
+    const producerId = this.producerLabel.get(mediaType) as string;
+
+    console.log('[resumeProducer] pause producer', producerId);
+
+    this.producers.get(producerId)?.resume();
   }
 
   removeConsumer(consumerId: string) {
