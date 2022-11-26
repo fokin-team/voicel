@@ -19,7 +19,7 @@ export class Room {
         single: (id: string, data: any) => void;
         all: (data: any) => void;
     }) {
-        this.id = id;
+    this.id = id;
 
     // Получаем настройки для меиа потоков
     const { mediaCodecs } = config.mediasoup.router;
@@ -84,7 +84,7 @@ export class Room {
       try {
         await transport.setMaxIncomingBitrate(maxIncomingBitrate);
       } catch (error) {
-        console.log(error);
+        console.log(1, error);
       }
     }
 
@@ -101,6 +101,8 @@ export class Room {
 
     console.log('Adding transport', { transportId: transport.id });
 
+    console.log(this.peers.get(peerId).transports);
+    
     this.peers.get(peerId).addTransport(transport);
 
     return {
