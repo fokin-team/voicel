@@ -10,7 +10,7 @@ services:
       NODE_ENV: production
     container_name: voicel-backend-production
     restart: always
-    volumes:
+    # volumes:
       # for development
       # - ./packages/backend:/usr/src/app
     ports:
