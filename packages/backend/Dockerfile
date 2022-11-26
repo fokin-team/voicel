@@ -1,7 +1,7 @@
 # Base project configuration
 FROM node:18.7.0-buster as build
 
-RUN apt update & apt install python3-pip
+RUN apt-get update || : && apt-get install python -y
 
 RUN npm i -g @nestjs/cli
 
