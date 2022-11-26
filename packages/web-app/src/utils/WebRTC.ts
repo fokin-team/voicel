@@ -403,7 +403,15 @@ class WebRtc {
   }
 
   pauseProducer(mediaType: keyof typeof MediaType) {
+    if (!this.producerLabel.has(mediaType)) {
+      throw new Error(`[pauseProducer] producer with type ${mediaType} not exists`);
+    }
 
+    const producerId = this.producerLabel.get(mediaType) as string;
+
+    console.log('[closeProducer] pause producer', producerId);
+
+    this.producers.get(producerId)?.pause();
   }
 
   resumeProducer(mediaType: keyof typeof MediaType) {
