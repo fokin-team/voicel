@@ -5,6 +5,8 @@ export class WebSocketEntity extends WebSocket {
 
   public userId?: string;
 
+  public roomId?: string;
+
   public socketId?: string;
 
   public tokenAccess?: string;

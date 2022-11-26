@@ -6,6 +6,7 @@ import {
 import {createWorker} from 'mediasoup';
 
 import { Peer } from "@/mediasoup/mediasoup.peer";
+import { Room } from "@/mediasoup/mediasoup.room";
 
 import {MessageMetaData} from "@/ws/ws.message-meta-data.decorator";
 import { WsFilterException } from "@/ws/exceptions/ws.filter.exception";
@@ -86,5 +87,30 @@ export class ConnectionsGateway {
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name))
 
     return this.roomList.get(body.roomId);
+  }
+
+  @MessageMetaData('get-room')
+  @SubscribeMessage('get-room')
+  async getRoomById(@MessageBody() body: JoinDto) {
+    return this.roomList.get(body.roomId);
+  }
+
+  async handleDisconnect(client: WebSocketEntity){
+    if (!client.roomId) {
+      return;
+    }
+
+    if (!this.roomList.has(client.roomId)) {
+      throw new Error('Room not found');
+    }
+
+    await this.roomList.get(client.roomId).removePeer(client.socketId);
+    if (this.roomList.get(client.roomId).getPeers().size === 0) {
+      this.roomList.delete(client.roomId);
+    }
+
+    client.roomId = null;
+
+    return {};
   }
 }
