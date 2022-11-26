@@ -1,7 +1,9 @@
 import { WsService } from '@/ws/ws.service';
 import {
-  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WsResponse,
+  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway,
 } from '@nestjs/websockets';
+
+import { WsResponse } from '@/ws/interfaces/ws.response.interface';
 
 import { createWorker } from 'mediasoup';
 
@@ -95,7 +97,10 @@ export class ConnectionsGateway {
       return {
         event: 'create-room',
         data: {
-          roomId,
+          status: true,
+          data: {
+            roomId,
+          }
         },
       };
     }
@@ -132,7 +137,10 @@ export class ConnectionsGateway {
 
     return {
       event: 'join',
-      data: this.roomList.get(body.roomId).toJson(),
+      data: {
+        status: true,
+        data: this.roomList.get(body.roomId).toJson()
+      },
     };
   }
 
@@ -144,7 +152,10 @@ export class ConnectionsGateway {
   }>> {
     return {
       event: 'get-room',
-      data: this.roomList.get(body.roomId).toJson(),
+      data: {
+        status: true,
+        data: this.roomList.get(body.roomId).toJson(),
+      },
     };
   }
 
@@ -165,7 +176,10 @@ export class ConnectionsGateway {
     return {
       event: 'produce',
       data: {
-        producerId: producerId as any,
+        status: true,
+        data: {
+          producerId: producerId as any,
+        }
       },
     };
   }
@@ -186,7 +200,10 @@ export class ConnectionsGateway {
     const result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
     return {
       event: 'consume',
-      data: result,
+      data: {
+        status: true,
+        data: result,
+      },
     };
   }
 
@@ -223,7 +240,10 @@ export class ConnectionsGateway {
     return {
       event: 'get-producers',
       data: {
-        items: producerList,
+        status: true,
+        data: {
+          items: producerList,
+        },
       },
     };
   }
@@ -234,7 +254,10 @@ export class ConnectionsGateway {
     try {
       return {
         event: 'get-rtp-capabilities',
-        data: this.roomList.get(client.roomId).getRtpCapabilities(),
+        data: {
+          status: true,
+          data: this.roomList.get(client.roomId).getRtpCapabilities(),
+        },
       };
     } catch (e) {
       throw e;
@@ -248,7 +271,10 @@ export class ConnectionsGateway {
       const { params } = await this.roomList.get(client.roomId).createWebRtcTransport(client.socketId);
       return {
         event: 'create-rtc-transport',
-        data: params,
+        data: {
+          status: true,
+          data: params,
+        },
       };
     } catch (e) {
       throw e;
@@ -260,7 +286,7 @@ export class ConnectionsGateway {
   async connectTransport(
   @MessageBody() body: ConnectTransportDto,
     @ConnectedSocket() client: WebSocketEntity,
-  ) {
+  ): Promise<WsResponse<void>> {
     if (!this.roomList.has(client.roomId)) {
       return;
     }
@@ -269,7 +295,10 @@ export class ConnectionsGateway {
 
     return {
       event: 'connect-transport',
-      data: {},
+      data: {
+        status: true,
+        data: undefined,
+      },
     };
   }
 }
