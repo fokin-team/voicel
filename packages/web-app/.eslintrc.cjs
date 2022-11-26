@@ -17,7 +17,6 @@ module.exports = {
   },
   parser: 'vue-eslint-parser',
   parserOptions: {
-    requireConfigFile: false,
     project: ['./tsconfig.json'],
     tsconfigRootDir: '.',
     parser: '@typescript-eslint/parser',
@@ -43,7 +42,7 @@ module.exports = {
       },
     },
   },
-  ignorePatterns: ['*.js', 'pwa.config.ts', 'vite.config.ts'],
+  ignorePatterns: ['*.js', 'vite.config.ts'],
   rules: {
     'max-len': ['error', { 'code': 120 }],
     'import/no-unresolved': 'error',
