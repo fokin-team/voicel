@@ -35,13 +35,13 @@ class WebRtc {
 
   public producerTransport: MediasoupTypes.Transport | undefined = undefined;
 
-  public producerLabel = new Map<string, string>();
-
   public consumerTransport: MediasoupTypes.Transport | undefined = undefined;
 
-  public consumers = new Map();
+  public consumers = new Map<string, MediasoupTypes.Consumer>();
 
-  public producers = new Map();
+  public producers = new Map<string, MediasoupTypes.Producer>();
+
+  public producerLabel = new Map<string, string>();
 
   public device: Device | undefined = undefined;
 
@@ -351,7 +351,7 @@ class WebRtc {
           this.emitter.emit(Events.startScreen);
           break;
         default:
-          return;
+          break;
       }
     } catch (e) {
       throw new Error(e as string);
@@ -371,13 +371,35 @@ class WebRtc {
       throw new Error(`[closeProducer] producer with type ${mediaType} not exists`);
     }
 
-    const producerId = this.producerLabel.get(mediaType);
+    const producerId = this.producerLabel.get(mediaType) as string;
 
     console.log('[closeProducer] Close producer', producerId);
 
     this.ws.emit('producer-closed', {
       producerId,
     });
+
+    this.producers.get(producerId)?.close();
+    this.producers.delete(producerId);
+    this.producerLabel.delete(mediaType);
+
+    if (mediaType !== MediaType.audio) {
+      // TODO: delete media element;
+    }
+
+    switch (mediaType) {
+      case MediaType.audio:
+        this.emitter.emit(Events.stopAudio);
+        break;
+      case MediaType.video:
+        this.emitter.emit(Events.stopVideo);
+        break;
+      case MediaType.screen:
+        this.emitter.emit(Events.stopScreen);
+        break;
+      default:
+        break;
+    }
   }
 
   pauseProducer(mediaType: keyof typeof MediaType) {
