@@ -61,3 +61,10 @@ export interface Pausable {
    */
   resume: Fn
 }
+
+export type Listener = {
+  id: string;
+  callback: (arg: Event | CloseEvent | unknown) => void;
+};
+
+export type Listeners = Array<Listener>;
