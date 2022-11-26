@@ -141,6 +141,8 @@ export class ConnectionsGateway {
       throw new WsFormatException('Room does not exist');
     }
 
+    client.roomId = body.roomId;
+
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name));
 
     return {
