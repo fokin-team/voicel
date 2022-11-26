@@ -23,11 +23,11 @@ enum Events {
 class WebRtc {
   public name: string;
 
-  public localMediaNode: HTMLElement;
-
-  public remoteVideoNode: HTMLElement;
-
-  public remoteAudioNode: HTMLElement;
+  // public localMediaNode: HTMLElement;
+  //
+  // public remoteVideoNode: HTMLElement;
+  //
+  // public remoteAudioNode: HTMLElement;
 
   public ws: WebSocketProvider;
 
@@ -52,16 +52,16 @@ class WebRtc {
   public emitter = new Emitter();
 
   constructor(
-    localMediaNode: HTMLElement,
-    remoteVideoNode: HTMLElement,
-    remoteAudioNode: HTMLElement,
+    // localMediaNode: HTMLElement,
+    // remoteVideoNode: HTMLElement,
+    // remoteAudioNode: HTMLElement,
     ws: WebSocketProvider,
     name: string,
   ) {
     this.name = name;
-    this.localMediaNode = localMediaNode;
-    this.remoteVideoNode = remoteVideoNode;
-    this.remoteAudioNode = remoteAudioNode;
+    // this.localMediaNode = localMediaNode;
+    // this.remoteVideoNode = remoteVideoNode;
+    // this.remoteAudioNode = remoteAudioNode;
     this.ws = ws;
   }
 
@@ -233,7 +233,7 @@ class WebRtc {
     this.ws.emit('get-producers');
   }
 
-  async produce(mediaType: keyof typeof MediaType, deviceId = null) {
+  async produce(mediaType: keyof typeof MediaType, deviceId: string | null = null) {
     let mediaConstraints = {};
     let audio = false;
     let screen = false;

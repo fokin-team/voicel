@@ -1,15 +1,44 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+import { useWebSocketStore } from '@/stores/webSocketStore';
+import { useWebRtcStore } from '@/stores/webRtcStore';
+
+import { WebRtc } from '@/utils/WebRTC';
+import { WebSocketProvider } from '@/utils/WebSocket';
+
+import { useGetCSSVariable } from '@/hooks/useCssVariables';
 
 import VIcon from '@/components/kit/VIcon.vue';
 import VButton from '@/components/kit/VButton.vue';
 import VInput from '@/components/kit/VInput.vue';
 
-import { useGetCSSVariable } from '@/hooks/useCssVariables';
+const router = useRouter();
+
+const { ws } = useWebSocketStore();
+
+const webRtcStore = useWebRtcStore();
 
 const colorPrimary = useGetCSSVariable('--color-primary');
 
 const roomCode = ref('');
+
+const onCreateRoomButtonClickHandler = async () => {
+  const webRtc = new WebRtc(
+    (ws as WebSocketProvider),
+    '',
+  );
+
+  webRtcStore.setWebRtc(webRtc);
+
+  const roomId = await webRtcStore.webRtc?.createRoom();
+
+  if (typeof roomId === 'undefined') {
+    throw Error('create room is failed');
+  }
+  await router.push({ name: 'room', params: { id: roomId } });
+};
 </script>
 
 <template>
@@ -40,6 +69,7 @@ const roomCode = ref('');
             type="primary"
             :fluid="true"
             size="large"
+            @click="onCreateRoomButtonClickHandler"
           >
             Создать комнату
           </v-button>
