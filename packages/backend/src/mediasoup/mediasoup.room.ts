@@ -140,10 +140,8 @@ export class Room {
     return new Promise(
       async (resolve, reject) => {
         const producer = await main.peers.get(peerId).createProducer(producerTransportId, rtpParameters, kind);
-
                 resolve(producer.id)
-        
-                main.broadcast.single(peerId, 'newProducers', )
+                main.broadcast.single(peerId, 'newProducers');
             }
         )
     }
