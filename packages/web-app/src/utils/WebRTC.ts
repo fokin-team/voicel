@@ -1,6 +1,6 @@
 import { Device, types as MediasoupTypes } from 'mediasoup-client';
 
-import { WebSocketProvider } from '@/utils/WebSocket';
+import { WebSocketProvider, WsResponseMessage } from '@/utils/WebSocket';
 import { Emitter } from '@/utils/shared/Emitter';
 
 enum MediaType {
@@ -23,11 +23,11 @@ enum Events {
 class WebRtc {
   public name: string;
 
-  // public localMediaNode: HTMLElement;
-  //
-  // public remoteVideoNode: HTMLElement;
-  //
-  // public remoteAudioNode: HTMLElement;
+  public localMediaNode: HTMLElement | undefined;
+
+  public remoteVideoNode: HTMLElement | undefined;
+
+  public remoteAudioNode: HTMLElement | undefined;
 
   public ws: WebSocketProvider;
 
@@ -52,16 +52,10 @@ class WebRtc {
   public emitter = new Emitter();
 
   constructor(
-    // localMediaNode: HTMLElement,
-    // remoteVideoNode: HTMLElement,
-    // remoteAudioNode: HTMLElement,
     ws: WebSocketProvider,
     name: string,
   ) {
     this.name = name;
-    // this.localMediaNode = localMediaNode;
-    // this.remoteVideoNode = remoteVideoNode;
-    // this.remoteAudioNode = remoteAudioNode;
     this.ws = ws;
   }
 
@@ -76,7 +70,16 @@ class WebRtc {
     return this.roomId;
   }
 
-  async join(roomId: string) {
+  async join(
+    roomId: string,
+    localMediaNode: HTMLElement,
+    remoteVideoNode: HTMLElement,
+    remoteAudioNode: HTMLElement,
+  ) {
+    this.localMediaNode = localMediaNode;
+    this.remoteVideoNode = remoteVideoNode;
+    this.remoteAudioNode = remoteAudioNode;
+
     const responseJoinToRoom = await this.ws.emitPromised<{ id: string, peers: string }>('join', { roomId });
     if (!responseJoinToRoom.status) {
       throw new Error(`[join] join to room failed ${responseJoinToRoom.errors.toString()}`);
@@ -217,9 +220,15 @@ class WebRtc {
 
     this.wsListeners.set('consumer-closed', consumerClosedListenerId);
 
-    const newProducersListenerId = this.ws.on('new-producers', (data: unknown) => {
-      console.log('[initSockets]: new-producers: ', data);
-    });
+    const newProducersListenerId = this.ws
+      .on('get-producers', (data: WsResponseMessage<{ items: { producerId: string }[] }>) => { // изменить на бэке event
+        console.log('[initSockets]: get-producers: ', data);
+        if (data.status) {
+          data.data.items.forEach(async (producer) => {
+            await this.consume(producer.producerId);
+          });
+        }
+      });
 
     this.wsListeners.set('new-producers', newProducersListenerId);
 
@@ -381,7 +390,21 @@ class WebRtc {
 
     this.consumers.set(consumer.id, consumer);
 
-    // TODO: Add consume media content to DOM
+    let htmlNode;
+
+    if (kind === 'video') {
+      // TODO: Add consume media content to DOM
+    } else if (kind === 'audio') {
+      htmlNode = document.createElement('audio');
+      htmlNode.srcObject = stream;
+      console.log(stream);
+      htmlNode.id = consumer.id;
+      htmlNode.playsinline = false;
+      htmlNode.autoplay = true;
+      console.log('add audio');
+      console.log(this.remoteAudioNode);
+      this.remoteAudioNode?.appendChild(htmlNode);
+    }
 
     consumer.on('trackended', () => {
       console.log('[consume] Consumer track close');

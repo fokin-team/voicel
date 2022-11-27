@@ -81,7 +81,12 @@ onMounted(async () => {
       throw new Error('web rtc is undefined');
     }
 
-    await webRtcStore.webRtc.join(roomId);
+    await webRtcStore.webRtc.join(
+      roomId,
+      localVideoNode.value,
+      remoteVideoNode.value,
+      remoteAudioNode.value,
+    );
     await webRtcStore.webRtc.initTransports();
     webRtcStore.webRtc.initSockets();
   }
@@ -103,7 +108,9 @@ const onMicrophoneTurnOnButtonClickHandler = async () => {
 <template>
   <div class="room">
     <h1>Конференция</h1>
-    <v-button type="primary" @click="onMicrophoneTurnOnButtonClickHandler">Включить микрофон</v-button>
+    <v-button type="primary" @click="onMicrophoneTurnOnButtonClickHandler">
+      Включить микрофон
+    </v-button>
     <div ref="localVideoNode" class="local-video-node" />
     <div ref="remoteVideoNode" class="remote-video-node" />
     <div ref="remoteAudioNode" class="remote-audio-node" />
