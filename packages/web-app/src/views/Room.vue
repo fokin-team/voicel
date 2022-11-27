@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { useWebRtcStore } from '@/stores/webRtcStore';
@@ -30,23 +30,30 @@ const remoteVideoNode = ref<HTMLElement | null>(null);
 const remoteAudioNode = ref<HTMLElement | null>(null);
 
 const audioInputs: InputDeviceInfo[] = [];
+const videoInputs: InputDeviceInfo[] = [];
 
 let isEnumerateDevices = false;
 
 const enumerateDevices = async () => {
   const devices = await navigator.mediaDevices.enumerateDevices();
-  if (devices.length > 0) {
-    isEnumerateDevices = true;
-  }
+  console.log(devices);
+
   devices.forEach((device) => {
     switch (device.kind) {
       case 'audioinput':
         audioInputs.push(device);
         break;
+      case 'videoinput':
+        videoInputs.push(device);
+        break;
       default:
         break;
     }
   });
+
+  if (devices.length > 0) {
+    isEnumerateDevices = true;
+  }
 };
 
 const initEnumerateDevices = async () => {
@@ -60,7 +67,8 @@ const initEnumerateDevices = async () => {
     video: true,
   };
 
-  const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  await enumerateDevices();
   try {
     stream.getTracks().forEach((track) => { track.stop(); });
   } catch (e) {
@@ -74,7 +82,6 @@ onMounted(async () => {
       webRtcCreate();
     }
 
-    await enumerateDevices();
     await initEnumerateDevices();
 
     if (typeof webRtcStore.webRtc === 'undefined') {
@@ -103,6 +110,20 @@ const onMicrophoneTurnOnButtonClickHandler = async () => {
     alert('audio inputs not found');
   }
 };
+
+const onWebCamTurnOnButtonClickHandler = async () => {
+  if (videoInputs.length > 0) {
+    if (typeof webRtcStore.webRtc === 'undefined') {
+      throw new Error('web rtc is undefined');
+    }
+
+    console.log(videoInputs);
+
+    await webRtcStore.webRtc.produce('video', videoInputs[0].deviceId);
+  } else {
+    alert('audio inputs not found');
+  }
+};
 </script>
 
 <template>
@@ -110,6 +131,10 @@ const onMicrophoneTurnOnButtonClickHandler = async () => {
     <h1>Конференция</h1>
     <v-button type="primary" @click="onMicrophoneTurnOnButtonClickHandler">
       Включить микрофон
+    </v-button>
+
+    <v-button type="primary" @click="onWebCamTurnOnButtonClickHandler">
+      Включить локальное видео
     </v-button>
     <div ref="localVideoNode" class="local-video-node" />
     <div ref="remoteVideoNode" class="remote-video-node" />

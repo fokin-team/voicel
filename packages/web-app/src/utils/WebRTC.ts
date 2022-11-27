@@ -98,6 +98,7 @@ class WebRtc {
     let device: Device;
     try {
       device = new Device();
+      console.log(routerRtpCapabilities);
       await device.load({ routerRtpCapabilities });
       return device;
     } catch (e) {
@@ -280,6 +281,8 @@ class WebRtc {
       default:
     }
 
+    console.log(this.device);
+
     if (!this.device?.canProduce('video') && !audio) {
       throw new Error('[produce] Cannot produce video');
     }
@@ -337,11 +340,19 @@ class WebRtc {
 
       this.producers.set(producer.id, producer);
 
-      let localMediaElement: HTMLElement | undefined;
+      let localMediaElement: HTMLVideoElement | undefined;
 
       if (!audio) {
         localMediaElement = document.createElement('video');
-        // TODO: Add produce media content to DOM
+        localMediaElement.srcObject = stream;
+        localMediaElement.id = producer.id;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        localMediaElement.playsinline = false;
+        localMediaElement.autoplay = true;
+        localMediaElement.className = 'vid';
+
+        this.localMediaNode?.appendChild(localMediaElement);
       }
 
       producer.on('trackended', () => {
@@ -399,6 +410,8 @@ class WebRtc {
       htmlNode.srcObject = stream;
       console.log(stream);
       htmlNode.id = consumer.id;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       htmlNode.playsinline = false;
       htmlNode.autoplay = true;
       console.log('add audio');
