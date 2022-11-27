@@ -37,8 +37,8 @@ export const config = {
           'svc',
           'sctp'
         ],
-      rtcMinPort: process.env.MEDIASOUP_MIN_PORT || 40000,
-      rtcMaxPort: process.env.MEDIASOUP_MAX_PORT || 49999
+      rtcMinPort: process.env.MEDIASOUP_MIN_PORT || 10000,
+      rtcMaxPort: process.env.MEDIASOUP_MAX_PORT || 10100
     },
     // mediasoup Router options.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
