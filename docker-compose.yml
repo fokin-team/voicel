@@ -8,12 +8,22 @@ services:
     # command: ./init.sh
     environment:
       NODE_ENV: production
+      DEBUG: ""
+      DOMAIN: "vocel.ru"
+      PROTOO_LISTEN_PORT: "4443"
+      MEDIASOUP_LISTEN_IP: "0.0.0.0"
+      MEDIASOUP_ANNOUNCED_IP: "185.93.109.80"
+      MEDIASOUP_MIN_PORT: 2000
+      MEDIASOUP_MAX_PORT: 2500
+      MEDIASOUP_USE_VALGRIND: '${MEDIASOUP_USE_VALGRIND:="false"}'
+      MEDIASOUP_VALGRIND_OPTIONS: '${MEDIASOUP_VALGRIND_OPTIONS:="--leak-check=full --track-fds=yes --log-file=/storage/mediasoup_valgrind_%p.log"}'
     container_name: voicel-backend-production
     restart: always
     # volumes:
       # for development
       # - ./packages/backend:/usr/src/app
     ports:
+      - 44444:44444
       - 3000:3000
       - 8080
     networks:
