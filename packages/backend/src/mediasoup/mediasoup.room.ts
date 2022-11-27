@@ -15,10 +15,10 @@ export class Room {
      * @param id уникальный идентификатор комнаты
      * @param worker воркер
      */
-    constructor(id: string, worker: Worker, private broadcast: {
-        single: (id: string, data: any) => void;
-        all: (data: any) => void;
-    }) {
+  constructor(id: string, worker: Worker, private broadcast: {
+    single: (id: string, data: any) => void;
+    all: (data: any) => void;
+  }) {
     this.id = id;
 
     // Получаем настройки для меиа потоков
@@ -102,7 +102,7 @@ export class Room {
     console.log('Adding transport', { transportId: transport.id });
 
     console.log(this.peers.get(peerId).transports);
-    
+
     this.peers.get(peerId).addTransport(transport);
 
     return {
@@ -145,11 +145,10 @@ export class Room {
     return new Promise(
       async (resolve, reject) => {
         const producer = await main.peers.get(peerId).createProducer(producerTransportId, rtpParameters, kind);
-                resolve(producer.id)
-                main.broadcast.single(peerId, 'newProducers');
-            }
-        )
-    }
+        resolve(producer.id)
+      }
+    )
+  }
 
   /**
      * Потребление
@@ -210,12 +209,12 @@ export class Room {
     this.peers.get(peerId).closeProducer(producerId);
   }
 
-    /**
-     * Отправить сообщение пиру
-     * @param peerId уникальный идентификатор пира
-     * @param name название сообщение
-     * @param data данные сообщения
-     */
+  /**
+   * Отправить сообщение пиру
+   * @param peerId уникальный идентификатор пира
+   * @param name название сообщение
+   * @param data данные сообщения
+   */
   public send(peerId: string, name: string, data: any) {
     // TODO: реализовать отправку сообщение по сокетам
     // this.io.to(peerId).emit(name, data)

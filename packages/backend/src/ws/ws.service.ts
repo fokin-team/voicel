@@ -28,10 +28,24 @@ export class WsService {
     return id;
   }
 
-  public emitToAllRoomSessions(room: string, data: unknown) {
-    this.webSocketState.get(room)?.forEach((connection) => {
-      connection.client.send(pack(data));
-    });
+  public emitToAllRoomSessions(room: string, data: unknown, options: { except: string; } = null) {
+    let cb: (connection: WsStateValueInterface) => void;
+
+    if (options != null) {
+      if (options.except != null) {
+        cb = (connection) => {
+          if (connection.client.socketId !== options.except) {
+            connection.client.send(pack(data));
+          }
+        };
+      }
+    } else {
+      cb = (connection) => {
+        connection.client.send(pack(data));
+      };
+    }
+
+    this.webSocketState.get(room)?.forEach(cb);
   }
 
   public deleteConnectedWebSocketByUserIdAndClientId(userId: string, clientId: string) {

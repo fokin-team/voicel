@@ -28,6 +28,8 @@ import { ConnectTransportDto } from './dto/connect-transport.dto';
 import { EnvironmentVariables } from '../configuration';
 import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
+import { config } from '../mediasoup/mediasoup.config';
+
 // @UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
 export class ConnectionsGateway implements OnGatewayDisconnect {
@@ -57,7 +59,28 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
           console.error('mediasoup worker died, exiting in 2 seconds... [pid:%d]', worker.pid);
           setTimeout(() => process.exit(1), 2000);
         });
+
         this.workers.push(worker);
+
+        // Each mediasoup Worker will run its own WebRtcServer, so those cannot
+        // share the same listening ports. Hence we increase the value in config.js
+        // for each Worker.
+        const webRtcServerOptions = JSON.parse(JSON.stringify(config.mediasoup.webRtcServerOptions));
+        const portIncrement = this.workers.length - 1;
+
+        for (const listenInfo of webRtcServerOptions.listenInfos) {
+          listenInfo.port += portIncrement;
+        }
+
+        const webRtcServer = await worker.createWebRtcServer(webRtcServerOptions);
+
+        worker.appData.webRtcServer = webRtcServer;
+
+        setInterval(async () => {
+          const usage = await worker.getResourceUsage();
+
+          console.log('mediasoup Worker resource usage [pid:%d]: %o', worker.pid, usage);
+        }, 120000);
       }
     })();
   }
@@ -132,11 +155,11 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('join')
   async join(
     @MessageBody() body: JoinDto,
-      @ConnectedSocket() client: WebSocketEntity,
+    @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-        id: string;
-        peers: string;
-      }>> {
+    id: string;
+    peers: string;
+  }>> {
     if (!this.roomList.has(body.roomId)) {
       throw new WsFormatException('Room does not exist');
     }
@@ -174,10 +197,10 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('produce')
   async produce(
     @MessageBody() body: ProduceDto,
-      @ConnectedSocket() client: WebSocketEntity,
+    @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-        producerId: string;
-      }>> {
+    producerId: string;
+  }>> {
     if (!this.roomList.has(client.roomId)) {
       throw new WsFormatException({
         event: 'produce',
@@ -186,6 +209,18 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
     }
 
     const producerId = await this.roomList.get(client.roomId).produce(client.socketId, body.producerTransportId, body.rtpParameters, body.kind);
+
+    this.wsService.emitToAllRoomSessions(client.roomId, {
+      event: 'new-producers',
+      data: {
+        status: true,
+        data: {
+          items: [{ producerId: producerId }],
+        }
+      },
+    }, {
+      except: client.socketId,
+    });
 
     return {
       event: 'produce',
@@ -202,15 +237,15 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('consume')
   async consume(
     @MessageBody() body: ConsumeDto,
-      @ConnectedSocket() client: WebSocketEntity,
+    @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-        producerId: string;
-        id: any;
-        kind: any;
-        rtpParameters: any;
-        type: any;
-        producerPaused: any;
-      }>> {
+    producerId: string;
+    id: any;
+    kind: any;
+    rtpParameters: any;
+    type: any;
+    producerPaused: any;
+  }>> {
     const result = await this.roomList.get(client.roomId).consume(client.socketId, body.consumerTransportId, body.producerId, body.rtpCapabilities);
     return {
       event: 'consume',
@@ -243,14 +278,14 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
   async getProducers(
     @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<{
-        items: any[];
-      }>> {
+    items: any[];
+  }>> {
     if (!this.roomList.has(client.roomId)) return;
 
     const producerList = this.roomList.get(client.roomId).getProducerListForPeer();
 
     return {
-      event: 'get-producers',
+      event: 'new-producers',
       data: {
         status: true,
         data: {
@@ -302,7 +337,7 @@ export class ConnectionsGateway implements OnGatewayDisconnect {
   @MessageMetaData('connect-transport')
   @SubscribeMessage('connect-transport')
   async connectTransport(
-  @MessageBody() body: ConnectTransportDto,
+    @MessageBody() body: ConnectTransportDto,
     @ConnectedSocket() client: WebSocketEntity,
   ): Promise<WsResponse<void>> {
     if (!this.roomList.has(client.roomId)) {

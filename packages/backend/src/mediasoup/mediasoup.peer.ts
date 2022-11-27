@@ -138,6 +138,14 @@ export class Peer {
     }
 
     /**
+     * Получить список всех продючеров пира
+     * @returns 
+     */
+    async getProducers() {
+        return this.producers;
+    }
+
+    /**
      * Закрыть пир
      */
     public close() {
