@@ -1,9 +1,9 @@
-import { randomUUID } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { pack } from 'msgpackr';
 
 import { WebSocketEntity } from './entities/ws.web-socket.entity';
 import { WsStateValueInterface } from './interfaces/ws.state-value.interface';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class WsService {
@@ -21,7 +21,7 @@ export class WsService {
       this.webSocketState.set(room, []);
     }
 
-    const id = randomUUID();
+    const id = nanoid();
 
     this.webSocketState.get(room).push({ id, client: webSocket });
 

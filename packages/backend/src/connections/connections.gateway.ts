@@ -1,6 +1,6 @@
 import { WsService } from '@/ws/ws.service';
 import {
-  ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway,
+  ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway,
 } from '@nestjs/websockets';
 
 import { UseFilters } from '@nestjs/common';
@@ -30,7 +30,7 @@ import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
 // @UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
-export class ConnectionsGateway {
+export class ConnectionsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly wsService: WsService,
     private configService: ConfigService<EnvironmentVariables>,
@@ -218,6 +218,10 @@ export class ConnectionsGateway {
         data: result,
       },
     };
+  }
+
+  handleConnection(client: WebSocketEntity) {
+    client.socketId = nanoid();
   }
 
   async handleDisconnect(client: WebSocketEntity) {
