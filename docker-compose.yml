@@ -15,8 +15,6 @@ services:
       MEDIASOUP_ANNOUNCED_IP: "185.93.109.80"
       MEDIASOUP_MIN_PORT: 2000
       MEDIASOUP_MAX_PORT: 2500
-      MEDIASOUP_USE_VALGRIND: '${MEDIASOUP_USE_VALGRIND:="false"}'
-      MEDIASOUP_VALGRIND_OPTIONS: '${MEDIASOUP_VALGRIND_OPTIONS:="--leak-check=full --track-fds=yes --log-file=/storage/mediasoup_valgrind_%p.log"}'
     container_name: voicel-backend-production
     restart: always
     # volumes:
