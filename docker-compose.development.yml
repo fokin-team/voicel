@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+    container_name: voicel-backend-production
+    restart: always
+    ports:
+      - "3030:3030"
+      - "8080:8080"
+#  web-app:
+#    build:
+#      context: ./packages/web-app
+#      dockerfile: Dockerfile
+#    container_name: voicel-web-app-production
+#    restart: always
+#    ports:
+#      - 80
+#    networks:
+#      - nginx
+#    command: nginx -g "daemon off;"
