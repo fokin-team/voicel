@@ -30,7 +30,7 @@ import { ProducerClosedDto } from './dto/producer-сlosed.dto';
 
 // @UseFilters(WsFilterException)
 @WebSocketGateway(8080, { cors: true })
-export class ConnectionsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ConnectionsGateway implements OnGatewayDisconnect {
   constructor(
     private readonly wsService: WsService,
     private configService: ConfigService<EnvironmentVariables>,
@@ -142,6 +142,7 @@ export class ConnectionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     client.roomId = body.roomId;
+    client.socketId = this.wsService.setConnectedWebSocketByRoomId(body.roomId, client);
 
     this.roomList.get(body.roomId).addPeer(new Peer(client.socketId, body.name));
 
@@ -218,10 +219,6 @@ export class ConnectionsGateway implements OnGatewayConnection, OnGatewayDisconn
         data: result,
       },
     };
-  }
-
-  handleConnection(client: WebSocketEntity) {
-    client.socketId = nanoid();
   }
 
   async handleDisconnect(client: WebSocketEntity) {
