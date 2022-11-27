@@ -95,7 +95,7 @@ export const config = {
               'x-google-start-bitrate': 1000
             }
           }
-        ]
+        ] as RtpCodecCapability[]
     },
     // mediasoup WebRtcServer options for WebRTC endpoints (mediasoup-client,
     // libmediasoupclient).
@@ -133,13 +133,13 @@ export const config = {
             ip: process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
             announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP
           }
-        ],
+        ] as TransportListenIp[],
       initialAvailableOutgoingBitrate: 1000000,
       minimumAvailableOutgoingBitrate: 600000,
       maxSctpMessageSize: 262144,
       // Additional options that are not part of WebRtcTransportOptions.
       maxIncomingBitrate: 1500000
-    },
+    } ,
     // mediasoup PlainTransport options for legacy RTP endpoints (FFmpeg,
     // GStreamer).
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransportOptions
@@ -153,5 +153,4 @@ export const config = {
       maxSctpMessageSize: 262144
     }
   }
-},
 } as const ;

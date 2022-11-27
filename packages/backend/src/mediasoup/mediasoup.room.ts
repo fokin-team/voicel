@@ -22,7 +22,7 @@ export class Room {
     this.id = id;
 
     // Получаем настройки для меиа потоков
-    const { mediaCodecs } = config.mediasoup.router;
+    const { mediaCodecs } = config.mediasoup.routerOptions;
 
     // Создание роутера для комнаты
     worker.createRouter({ mediaCodecs })
@@ -70,10 +70,10 @@ export class Room {
      * @returns
      */
   public async createWebRtcTransport(peerId: string) {
-    const { maxIncomingBitrate, initialAvailableOutgoingBitrate } = config.mediasoup.webRtcTransport;
+    const { maxIncomingBitrate, initialAvailableOutgoingBitrate } = config.mediasoup.webRtcTransportOptions;
 
     const transport = await this.router.createWebRtcTransport({
-      listenIps: config.mediasoup.webRtcTransport.listenIps,
+      listenIps: config.mediasoup.webRtcTransportOptions.listenIps,
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,
