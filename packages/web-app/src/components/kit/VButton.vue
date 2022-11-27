@@ -240,17 +240,6 @@ const onButtonClickHandler = () => {
     }
   }
 
-  &.error {
-    color: var(--color-error);
-    background-color: var(--color-error);
-    border: 1px solid var(--color-error);
-
-    &:hover {
-      background-color: var(--color-error-shade);
-      border: 1px solid var(--color-error-shade);
-    }
-  }
-
   &.fluid {
     width: 100%;
   }
@@ -260,9 +249,21 @@ const onButtonClickHandler = () => {
   }
 
   &.circle {
-    border-radius: 50%;
+    border-radius: 0.5rem;
+    background-color: #EDEDED !important;
     min-width: v-bind('buttonStyle.height');
     padding: 0.5rem;
+  }
+
+  &.error {
+    color: var(--color-error);
+    background-color: var(--color-error) !important;
+    border: 1px solid var(--color-error);
+
+    &:hover {
+      background-color: var(--color-error-shade);
+      border: 1px solid var(--color-error-shade);
+    }
   }
 
   &:not(.ghost, .quaternary, .text) {

@@ -9,7 +9,7 @@ enum MediaType {
   screen = 'screen',
 }
 
-enum Events {
+export enum Events {
   exitRoom = 'exit-room',
   openRoom = 'open-room',
   startVideo = 'start-video',
@@ -222,8 +222,8 @@ class WebRtc {
     this.wsListeners.set('consumer-closed', consumerClosedListenerId);
 
     const newProducersListenerId = this.ws
-      .on('get-producers', (data: WsResponseMessage<{ items: { producerId: string }[] }>) => { // изменить на бэке event
-        console.log('[initSockets]: get-producers: ', data);
+      .on('new-producers', (data: WsResponseMessage<{ items: { producerId: string }[] }>) => { // изменить на бэке event
+        console.log('[initSockets]: new-producers: ', data);
         if (data.status) {
           data.data.items.forEach(async (producer) => {
             await this.consume(producer.producerId);
@@ -280,8 +280,6 @@ class WebRtc {
         break;
       default:
     }
-
-    console.log(this.device);
 
     if (!this.device?.canProduce('video') && !audio) {
       throw new Error('[produce] Cannot produce video');
@@ -352,6 +350,8 @@ class WebRtc {
         localMediaElement.autoplay = true;
         localMediaElement.className = 'vid';
 
+
+        console.log(this.localMediaNode);
         this.localMediaNode?.appendChild(localMediaElement);
       }
 
@@ -362,16 +362,24 @@ class WebRtc {
 
       producer.on('transportclose', () => {
         console.log('[produce] Producer transport close');
-        if (!audio) {
-          // TODO: Delete media content from DOM
+        if (!audio && localMediaElement) {
+          (localMediaElement.srcObject as MediaStream).getTracks().forEach((trackValue) => {
+            trackValue.stop();
+          });
+
+          localMediaElement.parentNode?.removeChild(localMediaElement);
         }
         this.producers.delete(producer.id);
       });
 
       producer.on('@close', () => {
         console.log('[produce] Closing producer');
-        if (!audio) {
-          // TODO: Delete media content from DOM
+        if (!audio && localMediaElement) {
+          (localMediaElement.srcObject as MediaStream).getTracks().forEach((trackValue) => {
+            trackValue.stop();
+          });
+
+          localMediaElement.parentNode?.removeChild(localMediaElement);
         }
         this.producers.delete(producer.id);
       });
@@ -404,11 +412,19 @@ class WebRtc {
     let htmlNode;
 
     if (kind === 'video') {
-      // TODO: Add consume media content to DOM
+      htmlNode = document.createElement('video');
+      htmlNode.srcObject = stream;
+      htmlNode.id = consumer.id;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      htmlNode.playsinline = false;
+      htmlNode.autoplay = true;
+      htmlNode.className = 'vid';
+      this.remoteVideoNode?.appendChild(htmlNode);
+      console.log('add video');
     } else if (kind === 'audio') {
       htmlNode = document.createElement('audio');
       htmlNode.srcObject = stream;
-      console.log(stream);
       htmlNode.id = consumer.id;
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -445,6 +461,8 @@ class WebRtc {
     if (!responseConsume.status) {
       throw new Error(`[getConsumeStream] get response consume options failed ${responseConsume.errors.toString()}`);
     }
+
+    console.log('[getConsumeStream]: Consume thread: ', responseConsume.data);
 
     const { id, kind, rtpParameters } = responseConsume.data;
 
@@ -489,7 +507,14 @@ class WebRtc {
     this.producerLabel.delete(mediaType);
 
     if (mediaType !== MediaType.audio) {
-      // TODO: Delete media content from DOM
+      const htmlNode = document.getElementById(producerId) as HTMLVideoElement;
+      if (htmlNode) {
+        (htmlNode.srcObject as MediaStream).getTracks().forEach((track) => {
+          track.stop();
+        });
+
+        htmlNode.parentNode?.removeChild(htmlNode);
+      }
     }
 
     switch (mediaType) {
@@ -536,7 +561,14 @@ class WebRtc {
       throw new Error(`[removeConsumer] producer with type ${consumerId} not exists`);
     }
 
-    // TODO: Delete media content from DOM
+    const htmlNode = document.getElementById(consumerId) as HTMLVideoElement;
+    if (htmlNode) {
+      (htmlNode.srcObject as MediaStream).getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      htmlNode.parentNode?.removeChild(htmlNode);
+    }
 
     this.consumers.delete(consumerId);
   }
